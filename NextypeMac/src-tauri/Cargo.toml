@@ -6,7 +6,7 @@ authors = ["Baozheng"]
 edition = "2021"
 license = "AGPL-3.0"
 repository = "https://github.com/bi-boo/luobi-nextype"
-homepage = "https://nextype.yuanfengai.cn"
+homepage = "https://yuanfengai.cn"
 
 [lib]
 name = "nextype_tauri_lib"
