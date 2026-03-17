@@ -14,8 +14,8 @@
 
 | 平台 | 状态 | 下载 |
 |------|------|------|
-| macOS | 稳定 | [GitHub Releases](https://github.com/bi-boo/nextype/releases) |
-| Android | 稳定 | [GitHub Releases](https://github.com/bi-boo/nextype/releases) |
+| macOS | 稳定 | [GitHub Releases](https://github.com/bi-boo/luobi-nextype/releases) |
+| Android | 稳定 | [GitHub Releases](https://github.com/bi-boo/luobi-nextype/releases) |
 | iOS | 基本可用 | App Store（即将上架） |
 | Windows | 开发中 | 即将发布 |
 
