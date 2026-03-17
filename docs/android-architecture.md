@@ -33,8 +33,6 @@ NextypeAndroid/app/src/main/java/com/nextype/android/
 ├── DeviceDiscoveryService.kt      # [残留] 局域网设备发现服务（mDNS + UDP，已废弃）
 ├── DeviceIDManager.kt             # 设备ID管理器，基于 ANDROID_ID 生成稳定唯一标识
 ├── PairedDevice.kt                # 配对设备数据模型 + PairedDeviceManager 多设备管理器
-├── VolcanoASRManager.kt           # 火山引擎语音识别管理器，WebSocket 二进制协议
-├── VolcanoConfig.kt               # 火山引擎 API 配置（密钥存储与音频参数）
 ├── NextypeAccessibilityService.kt # 辅助功能服务，模拟点击/长按、全局触摸检测
 ├── WakeUpEditText.kt              # 自定义 EditText，拦截软键盘输入触发屏幕唤醒
 ├── HTTPPairingClient.kt           # [残留] HTTP 配对客户端（已废弃，未使用）
@@ -45,9 +43,8 @@ NextypeAndroid/app/src/main/java/com/nextype/android/
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
-| `MainActivity.kt` | ~3200 | 应用核心，承载文本输入 UI、数据 WebSocket 连接管理、消息加密发送、远程指令处理、设备切换、屏幕常亮/变暗状态机、语音识别集成、折叠屏适配 |
+| `MainActivity.kt` | ~3200 | 应用核心，承载文本输入 UI、数据 WebSocket 连接管理、消息加密发送、远程指令处理、设备切换、屏幕常亮/变暗状态机、折叠屏适配 |
 | `RelayClient.kt` | ~461 | 独立的中继服务器 WebSocket 客户端，用于配对验证、信任列表同步、设备发现、解除配对、备注名同步等控制类操作 |
-| `VolcanoASRManager.kt` | ~571 | 火山引擎大模型流式语音识别，实现自定义二进制协议（Header + Payload），管理录音生命周期和打字机效果 |
 | `NextypeAccessibilityService.kt` | ~309 | Android AccessibilityService 实现，提供模拟点击（GestureDescription）、可续传长按（willContinue）、全局触摸事件检测 |
 | `PairedDevice.kt` | ~243 | 数据模型 `PairedDevice` 和管理器 `PairedDeviceManager`，负责多设备的 CRUD、JSON 序列化、旧格式迁移 |
 | `SettingsActivity.kt` | ~678 | 设置页面，管理所有用户偏好（惯用手、字号、剪贴板、屏幕常亮、辅助功能状态检测） |
@@ -171,27 +168,6 @@ onStop（进入后台）
 | `command` | `touch_up` | 长按释放 |
 | `command` | `touch_heartbeat` | 长按心跳 |
 
-### 火山引擎 ASR 协议（二进制 over WebSocket）
-
-采用自定义二进制协议，Header 固定 4 字节：
-
-```
-Byte 0: [Protocol Version (4bit)] [Header Size (4bit)]
-Byte 1: [Message Type (4bit)] [Message Flag (4bit)]
-Byte 2: [Serialization (4bit)] [Compression (4bit)]
-Byte 3: Reserved (0x00)
-```
-
-消息类型：
-- `0x01` Full Client Request — 初始配置（JSON + Gzip）
-- `0x02` Audio Only Request — 音频数据包（Gzip 压缩的 PCM）
-- `0x09` Full Server Response — 识别结果
-- `0x0F` Error Response — 错误
-
-消息标志：
-- `0x00` 普通包
-- `0x02` 最后一包（结束标志）
-
 ---
 
 ## 核心类详解
@@ -257,7 +233,7 @@ private var lastClearedContent: String? = null
 onCreate → 初始化 UI + 延迟 1 秒启动连接
 onResume → 重建连接 + 启动监控 + 自动切换 + 弹出键盘
 onStop   → 断开所有连接 + 停止心跳 + 停止监控（零后台耗电）
-onDestroy → 释放语音识别资源 + 清理回调
+onDestroy → 清理回调 + 释放资源
 ```
 
 #### 内部类
@@ -332,51 +308,6 @@ PC 端发送 touch_down → performTouchDown() → 启动心跳检测（每 200m
 PC 端持续发送 touch_heartbeat → onHeartbeat() → 刷新 lastHeartbeatTime
 PC 端发送 touch_up → performTouchUp() → 结束手势
 超时（1 秒无心跳）→ 自动调用 performTouchUp() 释放
-```
-
----
-
-### VolcanoASRManager（语音识别管理器）
-
-**文件**：`VolcanoASRManager.kt`（571 行）
-**设计模式**：StateFlow 状态暴露 + 协程作用域管理
-
-#### 关键属性
-
-```kotlin
-// 公开状态（StateFlow）
-val recognizedText: StateFlow<String>   // 识别结果文本
-val isRecording: StateFlow<Boolean>     // 录音状态
-
-// 打字机效果
-private var targetText = ""             // 服务器返回的完整文本
-private var displayedLength = 0         // 已显示的字符数
-private var isDefiniteResult = false    // 是否为最终确认结果
-```
-
-#### 关键方法
-
-| 方法签名 | 职责 |
-|----------|------|
-| `startRecording()` | 检查权限 → 清理旧资源 → 建立 WebSocket → 开始录音 |
-| `stopRecording()` | 停止录音 → 释放麦克风 → 发送负包 → 等待最终结果（最多 1.5 秒） |
-| `connectAndRecord()` | 建立到火山引擎的 WebSocket 连接 |
-| `sendFullClientRequest(ws: WebSocket)` | 发送初始配置（音频参数、识别选项） |
-| `startAudioRecording(ws: WebSocket)` | 创建 AudioRecord，每 200ms 发送一包音频 |
-| `parseServerResponse(data: ByteArray)` | 解析二进制响应，提取识别文本 |
-| `updateWithTypewriterEffect(newText: String)` | 临时结果逐字显示（30ms/字） |
-| `calculateAmplitude(buffer: ByteArray, size: Int): Float` | 计算 PCM 音频的 RMS 振幅（非线性映射） |
-| `getCurrentAmplitude(): Float` | 供声波动画读取当前音量 |
-| `release()` | 释放所有资源 |
-
-#### 二遍识别流程
-
-```
-1. 流式识别（临时结果）→ 打字机效果逐字显示
-2. 分句确认（definite=true）→ 直接全量替换文本
-3. 停止录音 → 发送负包 → 等待最终校验结果
-4. 收到最终结果 → 立即关闭 WebSocket
-5. 超时 1.5 秒未收到 → 强制关闭
 ```
 
 ---
@@ -502,8 +433,6 @@ WakeUpEditText
 | `keepScreenOn` | Boolean | true | 屏幕常亮开关 |
 | `autoDimEnabled` | Boolean | true | 闲置自动变暗开关 |
 | `autoDimTimeout` | Int | 60000 | 变暗等待时间（毫秒） |
-| `volcanoAppId` | String | "" | 火山引擎 APP ID |
-| `volcanoAccessKey` | String | "" | 火山引擎 Access Key |
 
 #### 4. `SwipeHintPrefs`（上滑提示状态）
 
@@ -519,7 +448,7 @@ WakeUpEditText
 
 | 权限 | 用途 |
 |------|------|
-| `android.permission.INTERNET` | WebSocket 连接（中继服务器、火山引擎 ASR） |
+| `android.permission.INTERNET` | WebSocket 连接（中继服务器） |
 | `android.permission.ACCESS_NETWORK_STATE` | 检测网络连接状态 |
 | `android.permission.ACCESS_WIFI_STATE` | 获取 WiFi 连接信息（局域网发现，当前残留） |
 | `android.permission.CHANGE_WIFI_MULTICAST_STATE` | mDNS 多播支持（局域网发现，当前残留） |
@@ -561,7 +490,7 @@ WakeUpEditText
 │                                                              │
 │  onCreate:                                                   │
 │    ├── 初始化 UI（Edge-to-edge、挖孔屏、折叠屏适配）            │
-│    ├── 初始化 PairedDeviceManager、VolcanoASRManager          │
+│    ├── 初始化 PairedDeviceManager                              │
 │    ├── 读取设置（剪贴板、屏幕常亮、字号）                       │
 │    ├── 延迟 1 秒：checkOnlineAndAutoSwitch → connectToRelay   │
 │    └── 延迟 300ms：弹出软键盘                                  │
@@ -583,7 +512,6 @@ WakeUpEditText
 │  onDestroy:                                                  │
 │    ├── 取消连接监控定时器                                      │
 │    ├── 关闭 dataWebSocket                                     │
-│    ├── 释放 VolcanoASRManager                                 │
 │    ├── 取消亮度动画                                            │
 │    └── 清理 AccessibilityService 全局回调                      │
 └─────────────────────────────────────────────────────────────┘
@@ -689,7 +617,7 @@ Base64( "Salted__" + salt[8] + AES_CBC_encrypt(plaintext) )
 | `androidx.constraintlayout:constraintlayout` | 2.1.4 | **[未使用]** 约束布局，项目中所有布局均使用 LinearLayout/FrameLayout |
 | `androidx.lifecycle:lifecycle-runtime-ktx` | 2.6.1 | `lifecycleScope` 协程作用域，用于 Activity 内的协程管理 |
 | `org.jetbrains.kotlinx:kotlinx-coroutines-android` | 1.7.3 | Kotlin 协程 Android 调度器，用于异步操作 |
-| `com.squareup.okhttp3:okhttp` | 4.12.0 | WebSocket 客户端（中继服务器通信、火山引擎 ASR 通信） |
+| `com.squareup.okhttp3:okhttp` | 4.12.0 | WebSocket 客户端（中继服务器通信） |
 
 ### 测试依赖
 
@@ -712,16 +640,9 @@ Base64( "Salted__" + salt[8] + AES_CBC_encrypt(plaintext) )
 
 ### 已注释代码
 
-- **[已注释]** `SettingsActivity.kt:29-30` — `switchShowVoiceButton` 语音输入开关声明，语音输入功能暂时隐藏
-- **[已注释]** `SettingsActivity.kt:44-47` — 火山引擎配置输入框声明（`volcanoConfigContainer`、`editVolcanoAppId`、`editVolcanoAccessKey`）
 - **[已注释]** `SettingsActivity.kt:49-52` — 设备管理 UI 组件声明（`pairedDevicesLabel`、`devicesListContainer`、`addDeviceButton`），已移至首页弹层
-- **[已注释]** `SettingsActivity.kt:155-156` — `switchShowVoiceButton` 初始化
-- **[已注释]** `SettingsActivity.kt:163-166` — 火山引擎配置输入框初始化
 - **[已注释]** `SettingsActivity.kt:168-171` — 设备管理 UI 初始化
-- **[已注释]** `SettingsActivity.kt:238-267` — 语音输入开关监听器和火山引擎配置输入监听器
 - **[已注释]** `SettingsActivity.kt:269-273` — 添加新设备按钮点击事件
-- **[已注释]** `SettingsActivity.kt:295-312` — 语音输入和火山引擎配置的加载逻辑
-- **[已注释]** `SettingsActivity.kt:333-336` — `updateVolcanoConfigVisibility` 方法
 - **[已注释]** `SettingsActivity.kt:395-460` — `loadPairedDevices` 方法（设备列表渲染），已移至首页弹层
 - **[已注释]** `SettingsActivity.kt:596` — `loadPairedDevices()` 调用
 - **[已注释]** `SettingsActivity.kt:598` — `syncServerPairingStatus()` 调用

@@ -63,18 +63,7 @@
 - **防重复**：同一次 `onResume` 只执行一次自动切换
 - **兜底机制**：注册成功后 5 秒内如果同步通道未就绪，也会触发一次自动切换
 
-### 6. 语音输入（火山引擎 ASR）
-
-- **按住说话**：按住语音按钮开始录音，松开结束
-- **火山引擎大模型 ASR**：通过 WebSocket 二进制协议与 `wss://openspeech.bytedance.com` 通信
-- **音频参数**：PCM 16kHz / 16bit / 单声道，每 200ms 发送一包
-- **识别特性**：启用 ITN（数字格式化）、标点符号、二遍识别校验（enable_nonstream）
-- **打字机效果**：临时结果逐字显示（30ms/字），最终确认结果直接全量替换
-- **声波动画**：录音时显示 7 条声波线条，根据实时音量振幅（RMS）动态调整高度
-- **触觉反馈**：按下和松开时分别触发不同强度的振动
-- **当前状态**：语音输入功能在设置页已被注释隐藏（`showVoiceInputButton` 默认 false），但代码完整保留
-
-### 7. 远程控制响应
+### 6. 远程控制响应
 
 - **接收 PC 端命令**：通过 WebSocket relay 消息接收 PC 端发来的 `command` 类型指令
 - **支持的指令**：
@@ -88,7 +77,7 @@
 - **防抖**：500ms 内不重复执行同一命令
 - **远程指令唤醒**：收到远程指令时自动唤醒变暗的屏幕
 
-### 8. 模拟点击（AccessibilityService）
+### 7. 模拟点击（AccessibilityService）
 
 - **单击**：通过 `GestureDescription` 在指定坐标执行 50ms 点击手势
 - **长按**：使用 `willContinue=true` 的 `StrokeDescription` 实现可续传长按
@@ -98,7 +87,7 @@
 - **降级方案**：Android 8.0 以下使用固定 800ms 长按
 - **全局触摸检测**：通过 `TYPE_TOUCH_INTERACTION_START` 事件检测屏幕任意位置触摸，用于屏幕唤醒
 
-### 9. 屏幕常亮与自动变暗
+### 8. 屏幕常亮与自动变暗
 
 - **屏幕常亮**：通过 `FLAG_KEEP_SCREEN_ON` 保持屏幕不灭（默认开启）
 - **自动变暗**：闲置指定时间后将屏幕亮度降至最低（0.01f），300ms 平滑动画过渡
@@ -115,7 +104,7 @@
 - **防误触**：变暗状态下第一次触摸只唤醒屏幕，不触发按钮点击
 - **录音保护**：录音期间暂停变暗倒计时，录音结束后恢复
 
-### 10. 屏幕参数上报（折叠屏自适应）
+### 9. 屏幕参数上报（折叠屏自适应）
 
 - **握手上报**：连接建立后发送 `device_info` 消息，包含 screenWidth 和 screenHeight
 - **变更上报**：`onConfigurationChanged` 检测到屏幕尺寸变化时发送 `screen_changed` 消息
@@ -126,7 +115,7 @@
   - 标准 API：`LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS`
   - 华为/荣耀私有 API：通过元反射设置 `hwFlags` 的 `FLAG_NOTCH_SUPPORT`
 
-### 11. 设置页
+### 10. 设置页
 
 - **惯用手**：左手/右手模式，控制发送按钮在左侧还是右侧
 - **输入框字号**：5 档滑动条（小/标准/中/大/特大），实时预览
@@ -135,19 +124,19 @@
 - **辅助功能**：显示当前开启状态，点击跳转系统辅助功能设置页
 - **使用说明**：跳转到 AboutActivity
 
-### 12. 设备恢复（卸载重装后恢复配对）
+### 11. 设备恢复（卸载重装后恢复配对）
 
 - **触发条件**：EmptyStateActivity 启动时，本地无配对设备
 - **恢复流程**：连接中继服务器 → 查询信任列表（`sync_trust_list`）→ 如果服务器有配对记录则恢复到本地 → 自动跳转主界面
 - **依赖条件**：设备 ID 基于 ANDROID_ID 生成，卸载重装后保持不变
 
-### 13. 后台零耗电
+### 12. 后台零耗电
 
 - **进入后台（onStop）**：断开所有 WebSocket 连接、停止心跳、停止连接监控、停止变暗倒计时
 - **恢复前台（onResume）**：重建 WebSocket 连接、启动连接监控、重置变暗倒计时、触发自动切换
 - **断线重连**：指数退避策略（2s → 4s → 8s → ... → 30s），最多重试 10 次
 
-### 14. 辅助功能权限提示
+### 13. 辅助功能权限提示
 
 - **触发条件**：PC 端发来模拟点击/长按指令但 AccessibilityService 未启用
 - **提示方式**：底部气泡提示"辅助控制权限未开启，点击前往设置"
@@ -156,24 +145,24 @@
 - **点击跳转**：点击气泡跳转到系统辅助功能设置页
 - **PC 端通知**：同时向 PC 端发送 `error` 类型消息，告知权限未开启
 
-### 15. 欢迎页（EmptyStateActivity）
+### 14. 欢迎页（EmptyStateActivity）
 
 - **展示内容**：App Logo、欢迎语、配对电脑按钮、获取电脑端应用（域名复制）、稍后配对链接
 - **自动跳转**：`onResume` 时检查是否已有配对设备，有则自动跳转主界面
 - **设备恢复**：启动时自动尝试从服务器恢复配对信息
 
-### 16. 使用说明页（AboutActivity）
+### 15. 使用说明页（AboutActivity）
 
 - **展示内容**：使用场景介绍、配对步骤说明（3步）、插入/发送功能说明、隐私保护声明
 - **交互**：域名复制、配对电脑按钮
 
-### 17. 键盘切换
+### 16. 键盘切换
 
 - **功能**：语音按钮左侧的键盘图标，点击可显示/隐藏软键盘
 - **状态同步**：根据键盘实际显示状态切换图标（键盘/收起键盘）
 - **Placeholder 联动**：键盘显示时隐藏引导文字，键盘隐藏且输入框为空时显示引导文字
 
-### 18. 渐变色引导文字
+### 17. 渐变色引导文字
 
 - **位置**：输入框居中显示"点击空白处开始输入"
 - **样式**：使用 `LinearGradient` 实现从橙色（#FFCBA4）到紫色（#E8A4FF）的渐变效果
@@ -239,16 +228,9 @@
 
 ## 废弃与未使用代码
 
-- **[已注释]** `SettingsActivity.kt:29-30` — `switchShowVoiceButton` 语音输入开关，语音输入功能暂时隐藏
-- **[已注释]** `SettingsActivity.kt:44-47` — 火山引擎配置输入框（`volcanoConfigContainer`、`editVolcanoAppId`、`editVolcanoAccessKey`），语音输入功能暂时隐藏
 - **[已注释]** `SettingsActivity.kt:49-52` — 设备管理相关 UI 组件（`pairedDevicesLabel`、`devicesListContainer`、`addDeviceButton`），已移至首页弹层
-- **[已注释]** `SettingsActivity.kt:155-156` — `switchShowVoiceButton` 初始化代码
-- **[已注释]** `SettingsActivity.kt:163-166` — 火山引擎配置输入框初始化代码
 - **[已注释]** `SettingsActivity.kt:168-171` — 设备管理 UI 初始化代码
-- **[已注释]** `SettingsActivity.kt:238-267` — 语音输入开关监听器和火山引擎配置输入监听器
 - **[已注释]** `SettingsActivity.kt:269-273` — 添加新设备按钮点击事件
-- **[已注释]** `SettingsActivity.kt:295-312` — 语音输入和火山引擎配置的加载逻辑
-- **[已注释]** `SettingsActivity.kt:333-336` — `updateVolcanoConfigVisibility` 方法
 - **[已注释]** `SettingsActivity.kt:395-460` — `loadPairedDevices` 方法（设备列表渲染逻辑），已移至首页弹层
 - **[已注释]** `SettingsActivity.kt:596` — `loadPairedDevices` 调用
 - **[已注释]** `SettingsActivity.kt:598` — `syncServerPairingStatus` 调用

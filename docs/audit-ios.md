@@ -33,7 +33,7 @@
 | 3 | 清空输入框 | ✅ | 含上滑恢复手势 |
 | 4 | 设备配对（配对码） | ✅ | 统一中继配对 |
 | 5 | 多设备管理 | ✅ | 添加、删除、切换、编辑名称和图标 |
-| 6 | 语音输入（火山引擎 ASR） | ❌ 已移除 | VolcanoASRManager.swift 已不存在 |
+| 6 | 语音输入 | ❌ 已移除 | 语音功能已删除 |
 | 7 | 公网中继连接 | ✅ | ConnectionManager 统一管理 |
 | 8 | AES 加密通信 | ✅ | EncryptionManager.swift |
 | 9 | 剪贴板同步设置 | ✅ | SettingsView 中可分别控制 |
@@ -111,7 +111,7 @@
 
 | 原 P0 问题 | 当前状态 |
 |-----------|---------|
-| 火山引擎 API 密钥硬编码 | ✅ 语音功能完全移除 |
+| 语音功能 API 密钥硬编码 | ✅ 语音功能完全移除 |
 | 加密调试日志输出明文和密钥 | ✅ EncryptionManager 中无 print |
 | NSAllowsArbitraryLoads = true | ✅ ATS 恢复默认严格模式 |
 

@@ -136,7 +136,7 @@ AES-256-CBC + PKCS7 Padding
 | 端 | 架构文档 | 核心内容 |
 |----|----------|----------|
 | Mac 桌面端 | [mac-architecture.md](mac-architecture.md) | Tauri Command 接口清单、服务层设计（relay_client/hotkey_manager/native_hotkey/clipboard/tray）、状态管理、日志架构、macOS 原生 API |
-| Android 移动端 | [android-architecture.md](android-architecture.md) | 双通道→统一连接架构、MainActivity 核心控制器、AccessibilityService 模拟点击、火山引擎 ASR 二进制协议、生命周期管理 |
+| Android 移动端 | [android-architecture.md](android-architecture.md) | 双通道→统一连接架构、MainActivity 核心控制器、AccessibilityService 模拟点击、生命周期管理 |
 | iOS 移动端 | [ios-architecture.md](ios-architecture.md) | 双通道通信架构、核心类详解、代码质量逐文件评估（含评分）、问题清单与修复建议、重写 vs 修复建议 |
 | 中继服务器 | [relay-server.md](relay-server.md) | 完整消息协议表、配对流程时序图、心跳与超时机制、数据持久化结构、部署配置、安全机制 |
 

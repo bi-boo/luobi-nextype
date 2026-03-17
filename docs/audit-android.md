@@ -34,7 +34,7 @@
 | 设备配对（4位配对码） | ✅ | 4格输入框、自动跳转、禁用自动填充/验证码助手 |
 | 多设备管理 | ✅ | BottomSheet、切换、编辑别名/图标、取消配对、在线状态 |
 | 自动切换（Follow the Light） | ✅ | onResume 触发、闲置<120s、最短闲置优先 |
-| 语音输入（火山引擎 ASR） | ⚠️ 代码已删除 | PRD 标注"代码完整保留"但实际已移除 |
+| 语音输入 | ⚠️ 代码已删除 | 火山引擎 ASR 相关代码（VolcanoASRManager.kt、VolcanoConfig.kt）已移除 |
 | 远程控制响应 | ✅ | send/insert/clear/tap/touch 全部实现，500ms 防抖 |
 | 模拟点击（AccessibilityService） | ✅ | 单击 50ms、长按、心跳检测、API 24 降级 |
 | 屏幕常亮与自动变暗 | ✅ | 4档等待时间、7种唤醒触发源 |
@@ -47,9 +47,7 @@
 
 ### PRD 与代码不一致项
 
-1. PRD 标注"语音输入代码完整保留"，但 VolcanoASRManager.kt 和 VolcanoConfig.kt 已被删除
-2. PRD 未记录新增类：CrashHandler、SecurePrefsHelper、ScenarioActivity、PrivacyPolicyActivity
-3. 架构文档仍列出已删除文件
+1. PRD 未记录新增类：CrashHandler、SecurePrefsHelper、ScenarioActivity、PrivacyPolicyActivity
 
 ---
 
