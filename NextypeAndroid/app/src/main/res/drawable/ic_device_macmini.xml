@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Apple Mac mini 风格迷你主机图标 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Mac mini 主体 - 圆角矩形薄片设计 -->
+    <path
+        android:fillColor="#49454F"
+        android:pathData="M3,9c-0.55,0 -1,0.45 -1,1v4c0,0.55 0.45,1 1,1h18c0.55,0 1,-0.45 1,-1V10c0,-0.55 -0.45,-1 -1,-1H3z"/>
+    <!-- 顶部铝合金面板效果 -->
+    <path
+        android:fillColor="#79747E"
+        android:pathData="M3,9.5h18v0.5H3z"/>
+    <!-- 前面板分割线 -->
+    <path
+        android:fillColor="#79747E"
+        android:pathData="M2.5,13.5h19v0.3h-19z"/>
+    <!-- 电源指示灯 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M19.5,12m-0.6,0a0.6,0.6 0,1 1,1.2 0a0.6,0.6 0,1 1,-1.2 0"/>
+    <!-- 底部散热格栅提示 -->
+    <path
+        android:fillColor="#79747E"
+        android:pathData="M4,14h2v0.3H4zM7,14h2v0.3H7zM10,14h2v0.3h-2z"/>
+</vector>

@@ -1,0 +1,67 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.NextypeAndroid" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorPrimaryVariant">@color/accent</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/accent</item>
+        <item name="colorSecondaryVariant">@color/accent</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <!-- App background -->
+        <item name="android:colorBackground">@color/background</item>
+        <!-- 光标颜色和选择高亮颜色：蓝色 -->
+        <item name="colorControlActivated">@color/accent</item>
+        <!-- 设置所有 EditText 的光标颜色 -->
+        <item name="android:textCursorDrawable">@drawable/cursor_blue</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">@color/background</item>
+        <!-- 浅色状态栏使用深色图标 -->
+        <item name="android:windowLightStatusBar">true</item>
+        <!-- Navigation bar color (底部导航栏/手势条区域) -->
+        <item name="android:navigationBarColor">@color/background</item>
+        <!-- 浅色导航栏使用深色图标 -->
+        <item name="android:windowLightNavigationBar">true</item>
+        <!-- 忽略挖孔屏区域，内容撑满全屏 -->
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="27">always</item>
+    </style>
+
+    <!-- 配对码输入框样式 - 聚焦时蓝色边框，未聚焦时灰色边框 -->
+    <style name="PairingCodeInputStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/pairing_code_box_stroke</item>
+        <item name="boxStrokeWidthFocused">2dp</item>
+        <item name="boxStrokeWidth">@dimen/border_width</item>
+        <item name="boxCornerRadiusTopStart">@dimen/radius_small</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/radius_small</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/radius_small</item>
+        <item name="boxCornerRadiusBottomEnd">@dimen/radius_small</item>
+        <item name="hintEnabled">false</item>
+    </style>
+
+    <!-- 主按钮样式：蓝底白字，28dp 圆角 -->
+    <style name="Widget.NextypeAndroid.Button.Primary" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/accent</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="cornerRadius">@dimen/radius_pill</item>
+        <item name="elevation">0dp</item>
+    </style>
+
+    <!-- 次级按钮样式：白底描边，28dp 圆角 -->
+    <style name="Widget.NextypeAndroid.Button.Secondary" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="backgroundTint">@color/card_background</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="cornerRadius">@dimen/radius_pill</item>
+        <item name="strokeColor">@color/border</item>
+        <item name="strokeWidth">@dimen/border_width</item>
+        <item name="elevation">0dp</item>
+    </style>
+
+    <!-- 文字按钮样式：无背景，纯文字 -->
+    <style name="Widget.NextypeAndroid.Button.Text" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textColor">@color/accent</item>
+    </style>
+
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+</resources>

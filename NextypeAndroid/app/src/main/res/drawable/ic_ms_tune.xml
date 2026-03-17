@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Three horizontal slider tracks with thumbs at different positions -->
+    <!-- Bottom track: left portion -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M3,17h6v2H3V17z" />
+    <!-- Bottom track: thumb -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M11,15v6h2v-6H11z" />
+    <!-- Bottom track: right portion -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M15,17h6v2h-6V17z" />
+    <!-- Middle track: left portion -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M3,11h10v2H3V11z" />
+    <!-- Middle track: thumb -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M15,9v6h2V9H15z" />
+    <!-- Middle track: right portion -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M19,11h2v2h-2V11z" />
+    <!-- Top track: left portion -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M3,5h14v2H3V5z" />
+    <!-- Top track: thumb -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M19,3v6h2V3H19z" />
+</vector>

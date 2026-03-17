@@ -1,0 +1,102 @@
+# General / OS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+*.sublime-workspace
+*.sublime-project
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Node.js / Web / Electron (Common)
+node_modules/
+dist/
+build/
+out/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+coverage/
+.nyc_output/
+
+# Electron Specific
+*.dmg
+*.zip
+*.app
+*.exe
+*.snap
+*.AppImage
+
+# iOS / Xcode (NextypeApp)
+NextypeApp/DerivedData/
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.ouimode1v3
+*.ouimode2v3
+*.moved-aside
+xcuserdata/
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+# CocoaPods
+Pods/
+*.xcworkspace/xcuserdata/
+
+# Android (NextypeAndroid)
+.gradle/
+local.properties
+.cxx/
+*.iml
+captures/
+.externalNativeBuild/
+# Android build folders (often inside app/ or root)
+**/build/
+
+# Security / Private
+credentials/
+legal/
+id_rsa
+id_rsa.pub
+*.pem
+*.key
+
+# Android signing
+*.jks
+*.keystore
+keystore.properties
+
+# AI 辅助工具配置
+.claude/
+.agent/
+CLAUDE.md
+
+# 废弃代码
+electron-app/
+
+# 个人文件
+To Do List/
+
+# 编译产物（补充）
+target/

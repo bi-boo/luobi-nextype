@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 圆角 Token -->
+    <dimen name="radius_pill">28dp</dimen>
+    <dimen name="radius_container">16dp</dimen>
+    <dimen name="radius_small">8dp</dimen>
+    <dimen name="radius_bottom_sheet">28dp</dimen>
+    <dimen name="radius_status_chip">18dp</dimen>
+
+    <!-- 间距 Token -->
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_sm">8dp</dimen>
+    <dimen name="spacing_md">12dp</dimen>
+    <dimen name="spacing_lg">16dp</dimen>
+    <dimen name="spacing_xl">20dp</dimen>
+    <dimen name="spacing_xxl">24dp</dimen>
+
+    <!-- 布局 Token -->
+    <dimen name="toolbar_height">56dp</dimen>
+    <dimen name="page_padding">16dp</dimen>
+
+    <!-- 边框 Token -->
+    <dimen name="border_width">1dp</dimen>
+    <dimen name="border_width_focused">1.5dp</dimen>
+</resources>

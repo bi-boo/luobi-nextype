@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 配对码输入框边框颜色 selector -->
+<!-- 聚焦时：蓝色 (#007AFF)，未聚焦时：灰色 (#BDBDBD) -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 聚焦状态：蓝色边框 -->
+    <item android:color="#007AFF" android:state_focused="true"/>
+    <!-- 鼠标悬停状态：稍深的灰色 -->
+    <item android:color="#9E9E9E" android:state_hovered="true"/>
+    <!-- 默认状态：灰色边框 -->
+    <item android:color="#BDBDBD"/>
+</selector>

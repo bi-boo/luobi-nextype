@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 输入框 hint/label 颜色 selector -->
+<!-- 聚焦时：蓝色 (#007AFF)，未聚焦时：深灰色 (#49454F) -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 聚焦状态：蓝色标签 -->
+    <item android:color="#007AFF" android:state_focused="true"/>
+    <!-- 默认状态：深灰色标签 -->
+    <item android:color="#49454F"/>
+</selector>

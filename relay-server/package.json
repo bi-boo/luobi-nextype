@@ -1,0 +1,22 @@
+{
+    "name": "nextype-relay-server",
+    "version": "1.0.0",
+    "description": "WebSocket中继服务器 - 用于落笔Nextype公网连接",
+    "author": "Zheng Bao",
+    "license": "AGPL-3.0",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/bi-boo/nextype.git"
+    },
+    "homepage": "https://nextype.yuanfengai.cn",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "ws": "^8.18.3"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}

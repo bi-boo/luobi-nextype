@@ -1,0 +1,12 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp"
+    android:height="20dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- 清空/垃圾桶图标 - 线性风格 -->
+    <path
+        android:strokeColor="#000000"
+        android:strokeWidth="1.5"
+        android:fillColor="#00000000"
+        android:pathData="M3,6h18M8,6V4a2,2 0,0 1,2 -2h4a2,2 0,0 1,2 2v2M19,6v12a2,2 0,0 1,-2 2H7a2,2 0,0 1,-2 -2V6M10,11v6M14,11v6"/>
+</vector>

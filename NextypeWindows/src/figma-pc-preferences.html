@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nextype PC 偏好设置</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; background: #F5F5F7; color: #1d1d1f; font-size: 13px; }
+
+        .page-container { display: flex; flex-wrap: wrap; gap: 40px; padding: 40px; justify-content: center; background: #e5e5ea; min-height: 100vh; }
+
+        /* PC 窗口框架 */
+        .pc-window {
+            width: 800px;
+            height: 600px;
+            background: #F5F5F7;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* 标题栏 */
+        .titlebar { position: absolute; top: 0; left: 0; right: 0; height: 54px; background: #F5F5F7; }
+
+        /* 侧边栏 */
+        .sidebar { width: 180px; background: #F5F5F7; padding-top: 54px; display: flex; flex-direction: column; gap: 2px; }
+        .sidebar-item { padding: 10px 16px; margin: 0 10px; border-radius: 6px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; font-weight: 500; transition: background 0.15s; }
+        .sidebar-item.active { background: #007AFF; color: white; }
+        .sidebar-item .icon { width: 16px; height: 16px; fill: currentColor; }
+        .sidebar-item.active .icon { fill: white; }
+
+        /* 内容区 */
+        .content { flex: 1; padding: 74px 40px 24px; overflow-y: auto; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* 分组卡片 */
+        .settings-group { background: #FFFFFF; border-radius: 10px; margin-bottom: 20px; border: 0.5px solid rgba(0,0,0,0.05); overflow: hidden; }
+        .setting-item { padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 0.5px solid #E5E5E5; min-height: 48px; }
+        .setting-item:last-child { border-bottom: none; }
+        .setting-label { font-size: 13px; font-weight: 400; color: #1d1d1f; }
+        .setting-desc { font-size: 12px; color: #86868b; margin-top: 3px; }
+
+        /* 开关 */
+        .switch { position: relative; display: inline-block; width: 38px; height: 22px; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .switch .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: 0.3s; border-radius: 34px; }
+        .switch .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 2px; bottom: 2px; background-color: white; transition: 0.3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .switch input:checked + .slider { background-color: #007AFF; }
+        .switch input:checked + .slider:before { transform: translateX(16px); }
+
+        /* 区块标题 */
+        .section-header { margin: 20px 0 10px 4px; font-size: 12px; color: #86868b; font-weight: 400; text-transform: uppercase; letter-spacing: 0.3px; }
+
+        /* 配对码卡片 */
+        .pairing-card { background: #FFFFFF; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center; }
+        .pairing-code { font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #007AFF; font-family: monospace; margin: 8px 0; }
+        .pairing-timer { font-size: 12px; color: #a1a1a6; margin-top: 8px; }
+        .refresh-btn { margin-top: 12px; background: #007AFF; color: white; border: none; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; }
+
+        /* 下载按钮 */
+        .download-btns { display: flex; gap: 12px; }
+        .download-btn { flex: 1; height: 44px; font-size: 13px; font-weight: 500; background: #FFFFFF; color: #1d1d1f; border: none; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+        .download-btn .android-icon { width: 18px; height: 18px; fill: #3DDC84; }
+        .download-btn .ios-icon { width: 18px; height: 18px; fill: #555; }
+
+        /* 统计卡片 */
+        .stats-card { background: #FFFFFF; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+        .stat-row { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 0.5px solid #E5E5E5; }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { font-size: 14px; color: #1d1d1f; }
+        .stat-value { font-size: 24px; font-weight: 400; color: #1d1d1f; font-variant-numeric: tabular-nums; }
+
+        /* 快捷键输入 */
+        .hotkey-input { padding: 6px 12px; border-radius: 6px; background: #F5F5F7; border: 1px solid #E5E5E5; font-size: 12px; color: #1d1d1f; text-align: center; min-width: 140px; }
+        .hotkey-clear { width: 24px; height: 24px; border-radius: 4px; border: none; background: #F5F5F7; color: #a1a1a6; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; margin-left: 8px; }
+        .hotkey-group { display: flex; align-items: center; gap: 8px; }
+
+        /* 数字输入 */
+        .number-input { padding: 6px 8px; border-radius: 6px; background: #F5F5F7; border: 1px solid #E5E5E5; font-size: 13px; color: #1d1d1f; width: 60px; text-align: center; }
+        .delay-row { display: flex; align-items: center; gap: 8px; }
+        .delay-label { font-size: 12px; color: #86868b; }
+
+        /* 坐标配置 */
+        .coord-config { padding: 12px 16px; border-bottom: 0.5px dashed #E5E5E5; }
+        .coord-config:last-child { border-bottom: none; }
+        .coord-name-input { border: none; background: transparent; font-size: 14px; font-weight: 500; color: #1d1d1f; outline: none; width: 100%; }
+        .coord-size { font-size: 11px; color: #a1a1a6; margin-top: 4px; }
+        .coord-inputs { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+        .coord-input { width: 55px; text-align: center; }
+
+        /* 关于页 */
+        .about-container { text-align: center; padding-top: 40px; }
+        .app-logo { width: 80px; height: 80px; margin-bottom: 20px; border-radius: 18px; background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%); display: flex; align-items: center; justify-content: center; }
+        .app-logo svg { width: 40px; height: 40px; fill: white; }
+        .app-title { font-size: 24px; font-weight: 600; margin-bottom: 6px; }
+        .app-version { font-size: 12px; color: #86868b; margin-bottom: 30px; }
+        .about-link { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 0.5px solid #E5E5E5; cursor: pointer; }
+        .about-link:last-child { border-bottom: none; }
+        .about-link .arrow { width: 16px; height: 16px; fill: #a1a1a6; }
+        .copyright { position: absolute; bottom: 24px; left: 0; right: 0; font-size: 11px; color: #a1a1a6; }
+
+        /* 标签页标题 */
+        .page-label { position: absolute; top: -30px; left: 0; font-size: 14px; font-weight: 600; color: #666; background: #fff; padding: 6px 12px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+
+        <!-- 1. 基础设置 -->
+        <div style="position: relative;">
+            <div class="page-label">1. 基础设置</div>
+            <div class="pc-window">
+                <div class="sidebar">
+                    <div class="titlebar"></div>
+                    <div class="sidebar-item active"><svg class="icon" viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>基础设置</div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><path d="M17,1.01L7,1C5.9,1,5,1.9,5,3v18c0,1.1,0.9,2,2,2h10c1.1,0,2-0.9,2-2V3C19,1.9,18.1,1.01,17,1.01z M17,19H7V5h10V19z"/></svg>连接手机</div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" d="M3,3v18h18 M7,17v-5 M12,17V7 M17,17v-3"/></svg>使用数据</div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="5" y="8" width="3" height="3" rx="0.5" fill="currentColor"/><rect x="10" y="8" width="4" height="3" rx="0.5" fill="currentColor"/><rect x="16" y="8" width="3" height="3" rx="0.5" fill="currentColor"/><rect x="5" y="13" width="14" height="3" rx="0.5" fill="currentColor"/></svg>远程控制</div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" d="M12,8v0.5 M12,11v5"/></svg>关于和反馈</div>
+                </div>
+                <div class="content">
+                    <div id="general" class="tab-content active">
+                        <div class="settings-group">
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label">开机启动</div>
+                                    <div class="setting-desc">电脑启动时，自动运行应用</div>
+                                </div>
+                                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                            </div>
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label">菜单栏图标</div>
+                                    <div class="setting-desc">在屏幕顶部菜单栏，显示应用图标</div>
+                                </div>
+                                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                            </div>
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label">Dock 栏图标</div>
+                                    <div class="setting-desc">在屏幕底部 Dock 栏，显示应用图标</div>
+                                </div>
+                                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                            </div>
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label">清空剪贴板</div>
+                                    <div class="setting-desc">每次模拟粘贴动作后，清空剪贴板</div>
+                                </div>
+                                <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+                            </div>
+                        </div>
+                        <div class="section-header">系统权限</div>
+                        <div class="settings-group">
+                            <div class="setting-item">
+                                <div style="flex:1;">
+                                    <div class="setting-label">辅助功能权限</div>
+                                    <div class="setting-desc">用于自动粘贴功能，点击跳转系统设置</div>
+                                </div>
+                                <label class="switch" style="pointer-events:none;"><input type="checkbox" checked disabled><span class="slider"></span></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. 连接手机 -->
+        <div style="position: relative;">
+            <div class="page-label">2. 连接手机</div>
+            <div class="pc-window">
+                <div class="sidebar">
+                    <div class="titlebar"></div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>基础设置</div>
+                    <div class="sidebar-item active"><svg class="icon" viewBox="0 0 24 24"><path d="M17,1.01L7,1C5.9,1,5,1.9,5,3v18c0,1.1,0.9,2,2,2h10c1.1,0,2-0.9,2-2V3C19,1.9,18.1,1.01,17,1.01z M17,19H7V5h10V19z"/></svg>连接手机</div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" d="M3,3v18h18 M7,17v-5 M12,17V7 M17,17v-3"/></svg>使用数据</div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="5" y="8" width="3" height="3" rx="0.5" fill="currentColor"/><rect x="10" y="8" width="4" height="3" rx="0.5" fill="currentColor"/><rect x="16" y="8" width="3" height="3" rx="0.5" fill="currentColor"/><rect x="5" y="13" width="14" height="3" rx="0.5" fill="currentColor"/></svg>远程控制</div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" d="M12,8v0.5 M12,11v5"/></svg>关于和反馈</div>
+                </div>
+                <div class="content">
+                    <div class="section-header">配对码</div>
+                    <div class="pairing-card">
+                        <div style="font-size:13px;color:#86868b;">请在手机端输入此配对码</div>
+                        <div class="pairing-code">1 2 3 4</div>
+                        <div class="pairing-timer">60秒后过期</div>
+                        <button class="refresh-btn">刷新配对码</button>
+                    </div>
+                    <div class="section-header">已连接设备</div>
+                    <div class="settings-group" style="display:flex;justify-content:center;align-items:center;padding:20px;color:#a1a1a6;">
+                        暂无关联设备
+                    </div>
+                    <div class="section-header">下载手机端应用</div>
+                    <div class="download-btns">
+                        <button class="download-btn"><svg class="android-icon" viewBox="0 0 24 24"><path d="M17.6,9.48l1.84-3.18c0.16-0.31,0.04-0.69-0.26-0.85c-0.29-0.15-0.65-0.06-0.83,0.22l-1.88,3.24 c-2.86-1.21-6.08-1.21-8.94,0L5.65,5.67C5.47,5.39,5.11,5.3,4.82,5.45C4.52,5.61,4.4,5.99,4.56,6.3l1.84,3.18 C3.33,11.25,1.72,14.5,1.72,18h20.56C22.28,14.5,20.67,11.25,17.6,9.48z M7.12,15.5c-0.85,0-1.54-0.69-1.54-1.54 s0.69-1.54,1.54-1.54s1.54,0.69,1.54,1.54S7.97,15.5,7.12,15.5z M16.88,15.5c-0.85,0-1.54-0.69-1.54-1.54s0.69-1.54,1.54-1.54 s1.54,0.69,1.54,1.54S17.73,15.5,16.88,15.5z"/></svg>Android 版</button>
+                        <button class="download-btn"><svg class="ios-icon" viewBox="0 0 24 24"><path d="M18.71,19.5C17.88,20.74,17,21.95,15.66,21.97C14.32,22,13.89,21.18,12.37,21.18C10.84,21.18,10.37,21.95,9.1,22C7.79,22.05,6.8,20.68,5.96,19.47C4.25,17,2.94,12.45,4.7,9.39C5.57,7.87,7.13,6.91,8.82,6.88C10.1,6.86,11.32,7.75,12.11,7.75C12.89,7.75,14.37,6.68,15.92,6.84C16.57,6.87,18.39,7.1,19.56,8.82C19.47,8.88,17.39,10.1,17.41,12.63C17.44,15.65,20.06,16.66,20.09,16.67C20.06,16.74,19.67,18.11,18.71,19.5M13,3.5C13.73,2.67,14.94,2.04,15.94,2C16.07,3.17,15.6,4.35,14.9,5.19C14.21,6.04,13.07,6.7,11.95,6.61C11.8,5.46,12.36,4.26,13,3.5Z"/></svg>iOS 版</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. 使用数据 -->
+        <div style="position: relative;">
+            <div class="page-label">3. 使用数据</div>
+            <div class="pc-window">
+                <div class="sidebar">
+                    <div class="titlebar"></div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>基础设置</div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><path d="M17,1.01L7,1C5.9,1,5,1.9,5,3v18c0,1.1,0.9,2,2,2h10c1.1,0,2-0.9,2-2V3C19,1.9,18.1,1.01,17,1.01z M17,19H7V5h10V19z"/></svg>连接手机</div>
+                    <div class="sidebar-item active"><svg class="icon" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" d="M3,3v18h18 M7,17v-5 M12,17V7 M17,17v-3"/></svg>使用数据</div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="5" y="8" width="3" height="3" rx="0.5" fill="currentColor"/><rect x="10" y="8" width="4" height="3" rx="0.5" fill="currentColor"/><rect x="16" y="8" width="3" height="3" rx="0.5" fill="currentColor"/><rect x="5" y="13" width="14" height="3" rx="0.5" fill="currentColor"/></svg>远程控制</div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" d="M12,8v0.5 M12,11v5"/></svg>关于和反馈</div>
+                </div>
+                <div class="content">
+                    <div class="stats-card">
+                        <div class="stat-row">
+                            <div class="stat-label">同步次数</div>
+                            <div class="stat-value">1,234</div>
+                        </div>
+                        <div class="stat-row">
+                            <div class="stat-label">今日同步字数</div>
+                            <div class="stat-value">5,678</div>
+                        </div>
+                        <div class="stat-row">
+                            <div class="stat-label">累计同步字数</div>
+                            <div class="stat-value">98,765</div>
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <div class="setting-item">
+                            <div>
+                                <div class="setting-label">启用统计功能</div>
+                                <div class="setting-desc">关闭后将不再记录统计数据</div>
+                            </div>
+                            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. 远程控制 -->
+        <div style="position: relative;">
+            <div class="page-label">4. 远程控制</div>
+            <div class="pc-window">
+                <div class="sidebar">
+                    <div class="titlebar"></div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>基础设置</div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><path d="M17,1.01L7,1C5.9,1,5,1.9,5,3v18c0,1.1,0.9,2,2,2h10c1.1,0,2-0.9,2-2V3C19,1.9,18.1,1.01,17,1.01z M17,19H7V5h10V19z"/></svg>连接手机</div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" d="M3,3v18h18 M7,17v-5 M12,17V7 M17,17v-3"/></svg>使用数据</div>
+                    <div class="sidebar-item active"><svg class="icon" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="5" y="8" width="3" height="3" rx="0.5" fill="currentColor"/><rect x="10" y="8" width="4" height="3" rx="0.5" fill="currentColor"/><rect x="16" y="8" width="3" height="3" rx="0.5" fill="currentColor"/><rect x="5" y="13" width="14" height="3" rx="0.5" fill="currentColor"/></svg>远程控制</div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" d="M12,8v0.5 M12,11v5"/></svg>关于和反馈</div>
+                </div>
+                <div class="content">
+                    <div class="section-header">快捷键</div>
+                    <div class="settings-group">
+                        <div class="setting-item">
+                            <div>
+                                <div class="setting-label">发送 (回车)</div>
+                                <div class="setting-desc">触发手机端"发送"按钮</div>
+                            </div>
+                            <div class="hotkey-group">
+                                <input type="text" class="hotkey-input" value="⌘ ↵" readonly>
+                                <button class="hotkey-clear">✕</button>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <div>
+                                <div class="setting-label">插入</div>
+                                <div class="setting-desc">触发手机端"插入"按钮</div>
+                            </div>
+                            <div class="hotkey-group">
+                                <input type="text" class="hotkey-input" placeholder="点击录入" readonly>
+                                <button class="hotkey-clear">✕</button>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <div>
+                                <div class="setting-label">清空</div>
+                                <div class="setting-desc">触发手机端"清空"按钮</div>
+                            </div>
+                            <div class="hotkey-group">
+                                <input type="text" class="hotkey-input" placeholder="点击录入" readonly>
+                                <button class="hotkey-clear">✕</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-header">模拟点击</div>
+                    <div class="settings-group">
+                        <div class="setting-item">
+                            <div>
+                                <div class="setting-label">快捷键</div>
+                                <div class="setting-desc">点击手机屏幕指定坐标（需开启辅助功能）</div>
+                            </div>
+                            <div class="hotkey-group">
+                                <input type="text" class="hotkey-input" placeholder="点击录入" readonly>
+                                <button class="hotkey-clear">✕</button>
+                            </div>
+                        </div>
+                        <div class="coord-config">
+                            <input type="text" class="coord-name-input" value="折叠模式">
+                            <div class="coord-size">屏幕尺寸 1170 × 2532</div>
+                            <div class="coord-inputs">
+                                <span class="delay-label">X</span>
+                                <input type="number" class="number-input coord-input" value="585">
+                                <span class="delay-label">Y</span>
+                                <input type="number" class="number-input coord-input" value="2280">
+                                <button class="hotkey-clear">✕</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-header" style="margin-top:24px;">模拟长按</div>
+                    <div class="settings-group">
+                        <div class="setting-item">
+                            <div>
+                                <div class="setting-label">快捷键</div>
+                                <div class="setting-desc">长按手机屏幕指定坐标（需开启辅助功能）</div>
+                            </div>
+                            <div class="hotkey-group">
+                                <input type="text" class="hotkey-input" placeholder="点击录入" readonly>
+                                <button class="hotkey-clear">✕</button>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <div style="flex:1;">
+                                <div class="setting-label">释放后自动插入</div>
+                                <div class="setting-desc">长按释放后自动发送插入指令</div>
+                            </div>
+                            <div class="delay-row">
+                                <span class="delay-label">延时</span>
+                                <input type="number" class="number-input" value="300">
+                                <span class="delay-label">ms</span>
+                                <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+                            </div>
+                        </div>
+                        <div class="coord-config">
+                            <input type="text" class="coord-name-input" value="展开模式">
+                            <div class="coord-size">屏幕尺寸 1170 × 2532</div>
+                            <div class="coord-inputs">
+                                <span class="delay-label">X</span>
+                                <input type="number" class="number-input coord-input" value="585">
+                                <span class="delay-label">Y</span>
+                                <input type="number" class="number-input coord-input" value="2280">
+                                <button class="hotkey-clear">✕</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. 关于和反馈 -->
+        <div style="position: relative;">
+            <div class="page-label">5. 关于和反馈</div>
+            <div class="pc-window">
+                <div class="sidebar">
+                    <div class="titlebar"></div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>基础设置</div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><path d="M17,1.01L7,1C5.9,1,5,1.9,5,3v18c0,1.1,0.9,2,2,2h10c1.1,0,2-0.9,2-2V3C19,1.9,18.1,1.01,17,1.01z M17,19H7V5h10V19z"/></svg>连接手机</div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" d="M3,3v18h18 M7,17v-5 M12,17V7 M17,17v-3"/></svg>使用数据</div>
+                    <div class="sidebar-item"><svg class="icon" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="5" y="8" width="3" height="3" rx="0.5" fill="currentColor"/><rect x="10" y="8" width="4" height="3" rx="0.5" fill="currentColor"/><rect x="16" y="8" width="3" height="3" rx="0.5" fill="currentColor"/><rect x="5" y="13" width="14" height="3" rx="0.5" fill="currentColor"/></svg>远程控制</div>
+                    <div class="sidebar-item active"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" d="M12,8v0.5 M12,11v5"/></svg>关于和反馈</div>
+                </div>
+                <div class="content">
+                    <div class="about-container">
+                        <div class="app-logo"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12z"/></svg></div>
+                        <div class="app-title">落笔 Nextype</div>
+                        <div class="app-version">版本 1.0.0</div>
+                        <div class="settings-group">
+                            <div class="about-link">
+                                <span class="setting-label">检查更新</span>
+                                <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59,16.59L13.17,12L8.59,7.41L10,6l6,6l-6,6L8.59,16.59z"/></svg>
+                            </div>
+                            <div class="about-link">
+                                <span class="setting-label">我要反馈</span>
+                                <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59,16.59L13.17,12L8.59,7.41L10,6l6,6l-6,6L8.59,16.59z"/></svg>
+                            </div>
+                        </div>
+                        <div class="copyright">Copyright © 2025 BaoZheng. All rights reserved.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</body>
+</html>

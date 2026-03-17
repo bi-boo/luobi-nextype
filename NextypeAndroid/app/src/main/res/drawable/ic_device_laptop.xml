@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SF Symbols 风格 - laptopcomputer 笔记本图标（边框加粗版） -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="14dp"
+    android:viewportWidth="1827"
+    android:viewportHeight="1024">
+    <!-- 笔记本外框 + 底座（黑色），使用 evenOdd 填充规则镂空屏幕区域，边框加粗 -->
+    <path
+        android:fillColor="#000000"
+        android:fillType="evenOdd"
+        android:pathData="M0,973.53c0,34.28 25.11,60.57 59.76,60.57h1707.52c34.65,0 59.74,-26.29 59.74,-60.57c0,-34.88 -25.09,-60.57 -59.74,-60.57h-147.7V133.45c0,-104.59 -54.01,-157.93 -157.8,-157.93H365.24c-102.77,0 -157.8,53.34 -157.8,157.93v779.51H59.76c-34.65,0 -59.76,25.68 -59.76,60.57zM328,863v-692c0,-55 27,-82 82,-82h1007c55,0 82,27 82,82v692z"/>
+</vector>

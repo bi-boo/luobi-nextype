@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/bg_card">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="欢迎使用落笔 Nextype"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary"
+        android:gravity="center"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="在使用前，请阅读并同意我们的隐私政策。\n\n我们收集的信息：\n• 设备标识符，用于与电脑端配对\n• 配对设备信息（本地加密存储）"
+        android:textSize="14sp"
+        android:textColor="@color/text_secondary"
+        android:lineSpacingMultiplier="1.5"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:id="@+id/privacyPolicyLink"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="查看完整隐私政策"
+        android:textSize="14sp"
+        android:textColor="@color/accent"
+        android:layout_marginBottom="24dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackground"
+        android:contentDescription="查看完整隐私政策" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnAgree"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="同意并继续"
+        android:textSize="15sp"
+        android:layout_marginBottom="8dp"
+        style="@style/Widget.NextypeAndroid.Button.Primary"
+        app:backgroundTint="@color/accent"
+        app:cornerRadius="@dimen/radius_pill" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnDisagree"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="不同意"
+        android:textSize="15sp"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        app:cornerRadius="@dimen/radius_pill"
+        app:strokeColor="@color/border" />
+
+</LinearLayout>

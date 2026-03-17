@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Keyboard outline (outer rect CW + inner rect CCW = hollow border) -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M20,7H4C2.9,7 2,7.9 2,9v6c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V9C22,7.9 21.1,7 20,7zM20,15H4V9h16V15z" />
+    <!-- Keys row -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M5,10h2v2H5V10zM8,10h2v2H8V10zM11,10h2v2h-2V10zM14,10h2v2h-2V10zM17,10h2v2h-2V10z" />
+    <!-- Spacebar -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M7,13h10v1.5H7V13z" />
+</vector>

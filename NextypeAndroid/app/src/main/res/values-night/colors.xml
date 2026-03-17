@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 品牌色 -->
+    <color name="accent">#007AFF</color>
+    <color name="primary">#007AFF</color>
+
+    <!-- 文字 -->
+    <color name="text_primary">#D9D9DE</color>
+    <color name="text_secondary">#86868B</color>
+    <color name="hint">#636366</color>
+
+    <!-- 背景 -->
+    <color name="background">#1C1C1E</color>
+    <color name="background_light">#1C1C1E</color>
+    <color name="card_background">#2C2C2E</color>
+
+    <!-- 边框 & 分隔线 -->
+    <color name="border">#1AFFFFFF</color>
+    <color name="divider">#3A3A3C</color>
+
+    <!-- 语义色 -->
+    <color name="danger">#FF453A</color>
+    <color name="success">#30D158</color>
+
+    <!-- 图标 -->
+    <color name="icon_default">#AEAEB2</color>
+
+    <!-- Material Design 3 主题色（深色） -->
+    <color name="md_theme_primary">#007AFF</color>
+    <color name="md_theme_onPrimary">#FFFFFF</color>
+    <color name="md_theme_primaryContainer">#003566</color>
+    <color name="md_theme_surfaceVariant">#3A3A3C</color>
+    <color name="md_theme_outline">#636366</color>
+</resources>

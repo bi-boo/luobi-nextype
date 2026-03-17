@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>欢迎使用落笔 Nextype</title>
+    <meta name="color-scheme" content="light dark">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: var(--bg-body);
+            overflow: hidden;
+            -webkit-app-region: drag;
+        }
+
+        .slides-container {
+            flex: 1;
+            display: flex;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: transform;
+            transform: translateZ(0);
+        }
+
+        .slide {
+            min-width: 100%;
+            padding: 30px 40px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .slide-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+            -webkit-app-region: no-drag;
+        }
+
+        .slide-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            font-family: var(--font-family-display);
+            letter-spacing: -0.3px;
+        }
+
+        .slide-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            max-width: 320px;
+        }
+
+        .footer {
+            padding: 16px 40px 32px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            -webkit-app-region: no-drag;
+        }
+
+        @supports (padding: env(safe-area-inset-bottom)) {
+            .footer {
+                padding-bottom: calc(32px + env(safe-area-inset-bottom));
+            }
+        }
+
+        .dots {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--separator);
+            transition: background 0.2s, width 0.2s;
+        }
+
+        .dot.active {
+            background: var(--accent);
+            width: 16px;
+            border-radius: 3px;
+        }
+
+        .btn-next {
+            padding: 10px 28px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: opacity 0.15s, transform 0.15s;
+        }
+
+        .btn-next:active {
+            transform: scale(0.97);
+        }
+
+        /* 侧边导航箭头 */
+        .side-nav {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.15s, color 0.15s;
+            z-index: 10;
+            -webkit-app-region: no-drag;
+        }
+
+        .side-nav:hover {
+            background: var(--separator);
+            color: var(--text-primary);
+        }
+
+        .side-nav:disabled {
+            opacity: 0.25;
+            cursor: not-allowed;
+        }
+
+        .side-nav.left  { left: 12px; }
+        .side-nav.right { right: 12px; }
+
+        /* 权限状态区域 */
+        .permission-status {
+            margin-top: 20px;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border: 0.5px solid var(--separator);
+            border-radius: var(--radius-m);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .status-icon {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .status-icon.pending { background: var(--warning); }
+        .status-icon.success { background: var(--success); }
+
+        /* 二维码容器 */
+        #qrContainer {
+            margin-top: 16px;
+            background: #ffffff;
+            padding: 10px;
+            border-radius: var(--radius-m);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        #qrImage {
+            width: 160px;
+            height: 160px;
+            display: block;
+        }
+
+        /* 权限列表 */
+        .permission-list {
+            text-align: left;
+            max-width: 300px;
+            font-size: 13px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .permission-list strong {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .permission-list-item {
+            margin-bottom: 10px;
+        }
+
+        /* 隐私要点 */
+        .privacy-item {
+            text-align: left;
+            max-width: 280px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .privacy-item strong {
+            color: var(--text-primary);
+            font-weight: 500;
+            display: block;
+            margin-bottom: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 侧边导航箭头 -->
+    <button class="side-nav left" id="prevBtn" disabled aria-label="上一步">‹</button>
+    <button class="side-nav right" id="nextBtnNav" aria-label="下一步">›</button>
+
+    <div class="slides-container" id="slides" role="region" aria-label="引导步骤">
+        <!-- 第一页：欢迎 -->
+        <div class="slide" role="group" aria-label="第 1 步，共 4 步">
+            <div class="slide-icon" aria-hidden="true">✍️</div>
+            <h1 class="slide-title">手机打字，电脑同步显示</h1>
+            <p class="slide-desc">
+                手机语音输入更快、更准，<br>
+                落笔 Nextype 让手机直接成为电脑的无线键盘。<br><br>
+                <strong>打完即上屏，无需复制粘贴。</strong>
+            </p>
+        </div>
+
+        <!-- 第二页：权限 -->
+        <div class="slide" role="group" aria-label="第 2 步，共 4 步">
+            <div class="slide-icon" aria-hidden="true">🔐</div>
+            <h1 class="slide-title">授权两项权限</h1>
+            <div class="permission-list">
+                <div class="permission-list-item">
+                    <strong>① 辅助功能权限</strong>
+                    用于模拟键盘操作，自动粘贴文字。下方将实时检测。
+                </div>
+                <div class="permission-list-item">
+                    <strong>② 控制"系统事件"</strong>
+                    首次使用时弹窗，点击「允许」即可。
+                </div>
+            </div>
+
+            <div class="permission-status" id="permStatus" role="status" aria-live="polite">
+                <div class="status-icon pending" id="permIcon" aria-hidden="true"></div>
+                <span id="permText">检查权限中…</span>
+            </div>
+            <button class="btn btn-primary" onclick="checkPermission()" style="margin-top: 12px;" aria-label="重新检查辅助功能权限">重新检查</button>
+        </div>
+
+        <!-- 第三页：隐私安全 -->
+        <div class="slide" role="group" aria-label="第 3 步，共 4 步">
+            <div class="slide-icon" aria-hidden="true">🔒</div>
+            <h1 class="slide-title">您的数据，只在本地</h1>
+            <div style="display: flex; flex-direction: column; gap: 0; text-align: left; max-width: 280px;">
+                <div class="privacy-item">
+                    <strong>端到端加密传输</strong>
+                    手机与电脑直连加密，中继服务器无法读取内容。
+                </div>
+                <div class="privacy-item">
+                    <strong>无账号，不上传</strong>
+                    无需注册，不收集任何个人信息。
+                </div>
+                <div class="privacy-item">
+                    <strong>用完即走</strong>
+                    不常驻后台读取，只在你主动发送时工作。
+                </div>
+            </div>
+        </div>
+
+        <!-- 第四页：扫码连接 -->
+        <div class="slide" role="group" aria-label="第 4 步，共 4 步">
+            <h1 class="slide-title" style="margin-bottom: 8px;">扫码，立即体验</h1>
+            <p class="slide-desc">
+                手机和电脑连接同一 Wi-Fi，<br>用微信或系统相机扫描下方二维码。
+            </p>
+            <div id="qrContainer" role="img" aria-label="配对二维码">
+                <img id="qrImage" src="" alt="配对二维码，请扫描">
+            </div>
+            <p style="margin-top: 14px; font-size: 12px; color: var(--accent); line-height: 1.6;">
+                扫码后在手机上发一段文字，<br>光标放在电脑任意输入框内即可看到效果。
+            </p>
+        </div>
+    </div>
+
+    <div class="footer" role="navigation" aria-label="步骤导航">
+        <div class="dots" role="tablist" aria-label="步骤指示器">
+            <div class="dot active" role="tab" aria-selected="true" aria-label="第 1 步"></div>
+            <div class="dot" role="tab" aria-selected="false" aria-label="第 2 步"></div>
+            <div class="dot" role="tab" aria-selected="false" aria-label="第 3 步"></div>
+            <div class="dot" role="tab" aria-selected="false" aria-label="第 4 步"></div>
+        </div>
+        <button class="btn btn-primary btn-next" id="nextBtn">下一步</button>
+    </div>
+
+    <script>
+        // 通过 tauri-bridge 提供的统一接口访问 Tauri API
+        const tauriInvoke = window.__TAURI__ ? window.__TAURI__.core.invoke : async () => {};
+        const getCurrentWindow = window.__TAURI__ ? window.__TAURI__.window.getCurrentWindow : () => ({ close: async () => {} });
+
+        let currentSlide = 0;
+        const totalSlides = 4;
+        const slidesContainer = document.getElementById('slides');
+        const nextBtn = document.getElementById('nextBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtnNav = document.getElementById('nextBtnNav');
+        const dots = document.querySelectorAll('.dot');
+
+        // 下一步按钮逻辑
+        nextBtn.addEventListener('click', async () => {
+            if (currentSlide < totalSlides - 1) {
+                goToSlide(currentSlide + 1);
+            } else {
+                // 完成引导 - 关闭窗口
+                try {
+                    await tauriInvoke('close_window', { label: 'onboarding' });
+                } catch (e) {
+                    // 备用方案
+                    const win = getCurrentWindow();
+                    await win.close();
+                }
+            }
+        });
+
+        // 左箭头按钮
+        prevBtn.addEventListener('click', () => {
+            if (currentSlide > 0) {
+                goToSlide(currentSlide - 1);
+            }
+        });
+
+        // 右箭头按钮
+        nextBtnNav.addEventListener('click', () => {
+            if (currentSlide < totalSlides - 1) {
+                goToSlide(currentSlide + 1);
+            }
+        });
+
+        async function goToSlide(index) {
+            currentSlide = index;
+            slidesContainer.style.transform = `translateX(-${index * 100}%)`;
+
+            // 更新圆点
+            dots.forEach((dot, i) => {
+                const isActive = i === index;
+                dot.classList.toggle('active', isActive);
+                dot.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            });
+
+            // 更新按钮文字
+            if (index === totalSlides - 1) {
+                nextBtn.textContent = '开始使用';
+            } else {
+                nextBtn.textContent = '下一步';
+            }
+
+            // 更新箭头按钮状态
+            prevBtn.disabled = (index === 0);
+            nextBtnNav.disabled = (index === totalSlides - 1);
+
+            // 特殊逻辑
+            if (index === 1) {
+                // 第二页:权限页,主动触发权限请求
+                checkPermission();
+                // 同时触发系统权限弹窗
+                await tauriInvoke('request_accessibility_permission');
+            }
+
+            // 第四页：请求二维码
+            if (index === 3) {
+                requestQrCode();
+            }
+        }
+
+        // 权限检查
+        async function checkPermission() {
+            try {
+                const isTrusted = await tauriInvoke('has_accessibility_permission');
+                updatePermissionUI(isTrusted);
+            } catch (e) {
+                console.error('检查权限失败:', e);
+            }
+        }
+
+        function updatePermissionUI(isTrusted) {
+            const icon = document.getElementById('permIcon');
+            const text = document.getElementById('permText');
+
+            if (isTrusted) {
+                icon.className = 'status-icon success';
+                text.textContent = '权限已获取 ✅';
+            } else {
+                icon.className = 'status-icon pending';
+                text.textContent = '请在系统设置中授予权限';
+                // 自动打开系统设置
+                tauriInvoke('open_accessibility_settings');
+            }
+        }
+
+        // 请求二维码
+        async function requestQrCode() {
+            try {
+                const result = await tauriInvoke('generate_pairing_code', { forceRandom: false });
+                if (result.qrCodeUrl) {
+                    document.getElementById('qrImage').src = result.qrCodeUrl;
+                }
+            } catch (e) {
+                console.error('生成二维码失败:', e);
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始状态检查
+            setTimeout(checkPermission, 500);
+        });
+
+    </script>
+</body>
+
+</html>

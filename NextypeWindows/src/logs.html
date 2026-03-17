@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统日志</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Monaco', 'Menlo', 'Consolas', 'SF Mono', monospace;
+            background: #fff;
+            color: #000;
+            overflow: hidden;
+        }
+
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 8px 12px;
+            background: #f5f5f5;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header h1 {
+            font-size: 13px;
+            font-weight: normal;
+            color: #333;
+        }
+
+        .stats {
+            display: flex;
+            gap: 16px;
+            font-size: 11px;
+            color: #666;
+        }
+
+        .stat-value {
+            color: #000;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 4px 12px;
+            border: 1px solid #ccc;
+            background: #fff;
+            color: #333;
+            font-size: 11px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .btn:hover {
+            background: #f5f5f5;
+            border-color: #999;
+        }
+
+        .btn-danger {
+            color: #d32f2f;
+        }
+
+        .btn-danger:hover {
+            background: #ffebee;
+            border-color: #d32f2f;
+        }
+
+        .log-container {
+            flex: 1;
+            background: #fff;
+            overflow-y: auto;
+            padding: 0;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .log-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .log-container::-webkit-scrollbar-track {
+            background: #f5f5f5;
+        }
+
+        .log-container::-webkit-scrollbar-thumb {
+            background: #ccc;
+        }
+
+        .log-container::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+
+        /* 日志条目 Grid 布局 */
+        .log-entry {
+            display: grid;
+            grid-template-columns: 80px 70px 80px 1fr;
+            border-bottom: 1px solid #f0f0f0;
+            padding: 4px 8px;
+        }
+
+        .log-entry:hover {
+            background-color: #f9f9f9;
+        }
+
+        .log-timestamp {
+            color: #999;
+            font-size: 11px;
+        }
+
+        .log-level {
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .log-context {
+            color: #666;
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .log-message {
+            color: #333;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* 日志级别颜色 */
+        .level-INFO .log-level {
+            color: #2196f3;
+        }
+
+        .level-SUCCESS .log-level {
+            color: #4caf50;
+        }
+
+        .level-WARN .log-level {
+            color: #ff9800;
+        }
+
+        .level-ERROR .log-level {
+            color: #f44336;
+        }
+
+        .level-DEBUG .log-level {
+            color: #9c27b0;
+        }
+
+        /* 环境标签颜色 */
+        .context-local {
+            color: #795548;
+        }
+
+        /* 消息 - 蓝色 */
+        .context-message {
+            color: #2196f3;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-size: 12px;
+        }
+
+        /* 表头 */
+        .log-header {
+            display: grid;
+            grid-template-columns: 80px 70px 80px 1fr;
+            padding: 6px 8px;
+            background: #fafafa;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+            color: #666;
+            font-size: 11px;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>系统日志</h1>
+                <div class="stats">
+                    <span>总计: <span class="stat-value" id="totalCount">0</span></span>
+                    <span id="logPath">nextype.log</span>
+                </div>
+            </div>
+            <div class="controls">
+                <button class="btn" id="refreshBtn">刷新</button>
+                <button class="btn" id="exportBtn">导出</button>
+                <button class="btn btn-danger" id="clearBtn">清空</button>
+            </div>
+        </div>
+
+        <div class="log-header">
+            <div>时间</div>
+            <div>日志类型</div>
+            <div>消息类型</div>
+            <div>消息内容</div>
+        </div>
+
+        <div class="log-container" id="logContainer">
+            <div class="empty-state">暂无日志</div>
+        </div>
+    </div>
+
+    <script>
+        const invoke = window.__TAURI__.core.invoke;
+        const listen = window.__TAURI__.event.listen;
+        var currentLogs = [];
+
+        if (typeof invoke === 'function' && typeof listen === 'function') {
+            init();
+        } else {
+            document.getElementById('logContainer').innerHTML =
+                '<div class="empty-state">Tauri API 未就绪</div>';
+        }
+
+        async function init() {
+            try {
+                await loadLogs();
+            } catch (e) {
+                console.error('[Logs] 初始化失败:', e);
+                document.getElementById('logContainer').innerHTML =
+                    '<div class="empty-state">加载失败: ' + e.message + '</div>';
+            }
+
+            // 监听实时日志推送
+            await listen('new_log_entry', (event) => {
+                var logEntry = event.payload;
+                currentLogs.push(logEntry);
+                if (currentLogs.length > 1000) {
+                    currentLogs.shift();
+                }
+                renderLogs();
+            });
+
+            // 绑定事件
+            document.getElementById('refreshBtn').addEventListener('click', loadLogs);
+            document.getElementById('exportBtn').addEventListener('click', exportLogs);
+            document.getElementById('clearBtn').addEventListener('click', clearLogs);
+        }
+
+        async function loadLogs() {
+            try {
+                var logs = await invoke('get_logs');
+                currentLogs = logs || [];
+                renderLogs();
+            } catch (e) {
+                console.error('[Logs] 加载日志失败:', e);
+                document.getElementById('logContainer').innerHTML =
+                    '<div class="empty-state">加载日志失败: ' + e + '</div>';
+            }
+        }
+
+        function renderLogs() {
+            var container = document.getElementById('logContainer');
+
+            document.getElementById('totalCount').textContent = currentLogs.length;
+
+            if (currentLogs.length === 0) {
+                container.innerHTML = '<div class="empty-state">暂无日志</div>';
+                return;
+            }
+
+            var html = currentLogs.map(function(log) {
+                var timestamp = formatTimestamp(log.timestamp);
+                var parsed = parseMessage(log.message);
+
+                return '<div class="log-entry level-' + log.level + '">' +
+                    '<div class="log-timestamp">' + timestamp + '</div>' +
+                    '<div class="log-level">' + log.level + '</div>' +
+                    '<div class="log-context ' + parsed.typeClass + '">' + parsed.type + '</div>' +
+                    '<div class="log-message">' + escapeHtml(parsed.message) + '</div>' +
+                    '</div>';
+            }).join('');
+
+            container.innerHTML = html;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return '-';
+            var parts = timestamp.split(' ');
+            if (parts.length === 2) {
+                return parts[1];
+            }
+            return timestamp;
+        }
+
+        function parseMessage(fullMessage) {
+            if (!fullMessage) return { type: '-', message: '', typeClass: '' };
+
+            var match = fullMessage.match(/^\[(.*?)\] (.*)$/);
+
+            if (match) {
+                var type = match[1];
+                var message = match[2];
+                var typeClass = '';
+
+                if (type === '本地' || type === '本地处理') typeClass = 'context-local';
+                else if (type === '消息' || type === '内容同步') typeClass = 'context-message';
+
+                return { type: '[' + type + ']', message: message, typeClass: typeClass };
+            } else {
+                return { type: '-', message: fullMessage, typeClass: '' };
+            }
+        }
+
+        function escapeHtml(text) {
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function exportLogs() {
+            try {
+                var content = currentLogs.map(function(log) {
+                    return log.timestamp + ' [' + log.level + '] ' + log.message;
+                }).join('\n');
+
+                try {
+                    var dialogModule = window.__TAURI_PLUGIN_DIALOG__ || (window.__TAURI__ ? window.__TAURI__.dialog : null) || {};
+                    if (dialogModule.save) {
+                        var filePath = await dialogModule.save({
+                            defaultPath: 'nextype-logs.txt',
+                            filters: [{ name: 'Text', extensions: ['txt'] }]
+                        });
+                        if (filePath) {
+                            await invoke('write_file', { path: filePath, content: content });
+                            alert('日志已导出');
+                            return;
+                        }
+                        return;
+                    }
+                } catch (dialogErr) {
+                    console.warn('Dialog API 不可用，使用剪贴板导出:', dialogErr);
+                }
+
+                await navigator.clipboard.writeText(content);
+                alert('日志已复制到剪贴板');
+            } catch (e) {
+                console.error('导出日志失败:', e);
+                alert('导出失败: ' + e.message);
+            }
+        }
+
+        async function clearLogs() {
+            if (confirm('确定要清空所有日志吗？')) {
+                try {
+                    await invoke('clear_logs');
+                    currentLogs = [];
+                    renderLogs();
+                } catch (e) {
+                    console.error('清空日志失败:', e);
+                    alert('清空失败: ' + e.message);
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

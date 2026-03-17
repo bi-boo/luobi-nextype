@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- 应用显示名称 -->
+	<key>CFBundleDisplayName</key>
+	<string>落笔 Nextype</string>
+
+
+	<!-- 仅支持竖屏，禁止横屏 -->
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+	</array>
+
+	<!-- 使用了 AES-256-CBC 加密通信（非豁免加密），依据 BIS EAR 合规要求声明为 true -->
+	<!-- 提交 App Store 时选择 "mass market exemption" 豁免类别 -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<true/>
+
+</dict>
+</plist>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 文字按钮的 ripple 效果 - Material Design 3 风格 -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#1AB3261E">
+    
+    <!-- 按钮形状：圆角背景 -->
+    <item android:id="@android:id/mask">
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <solid android:color="#FFFFFF" />
+        </shape>
+    </item>
+    
+    <!-- 按钮默认背景：透明 -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <solid android:color="@android:color/transparent" />
+        </shape>
+    </item>
+</ripple>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 品牌色 -->
+    <color name="accent">#007AFF</color>
+    <color name="primary">#007AFF</color>
+
+    <!-- 文字 -->
+    <color name="text_primary">#1D1D1F</color>
+    <color name="text_secondary">#6E6E73</color>
+    <color name="hint">#999999</color>
+
+    <!-- 背景 -->
+    <color name="background">#F5F5F7</color>
+    <color name="background_light">#F2F2F7</color>
+    <color name="card_background">#FFFFFF</color>
+
+    <!-- 边框 & 分隔线 -->
+    <color name="border">#1A000000</color>
+    <color name="divider">#F0F0F0</color>
+
+    <!-- 语义色 -->
+    <color name="danger">#FF3B30</color>
+    <color name="success">#34C759</color>
+
+    <!-- 图标 -->
+    <color name="icon_default">#49454F</color>
+
+    <!-- Material Design 3 主题色（Slider 等 Material 组件使用） -->
+    <color name="md_theme_primary">#007AFF</color>
+    <color name="md_theme_onPrimary">#FFFFFF</color>
+    <color name="md_theme_primaryContainer">#D4E3FF</color>
+    <color name="md_theme_surfaceVariant">#E0E0E0</color>
+    <color name="md_theme_outline">#79747E</color>
+    <color name="ic_launcher_background">#007AFF</color>
+</resources>

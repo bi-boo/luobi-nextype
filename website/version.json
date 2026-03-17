@@ -1,0 +1,7 @@
+{
+  "version": "1.0.0",
+  "downloadUrl": "https://www.yuanfengai.cn/Nextype",
+  "releaseNotes": "1. 新增检查更新功能\n2. 每小时自动检查一次更新\n3. 优化图标显示\n4. 修复已知问题",
+  "releaseDate": "2025-11-25",
+  "minVersion": "1.0.0"
+}

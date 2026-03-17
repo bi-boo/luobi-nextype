@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 笔杆 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M62,26 L82,46 L44,84 L24,84 L24,64 Z" />
+    <!-- 笔尖高光 -->
+    <path
+        android:fillColor="#C8E0FF"
+        android:pathData="M24,64 L24,84 L44,84 Z" />
+    <!-- 笔顶端 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M62,26 L72,16 L92,36 L82,46 Z" />
+</vector>

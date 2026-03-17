@@ -1,0 +1,20 @@
+{
+  "name": "nextype-mac",
+  "description": "落笔 Nextype macOS 客户端",
+  "author": "Zheng Bao",
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bi-boo/nextype.git"
+  },
+  "homepage": "https://nextype.yuanfengai.cn",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

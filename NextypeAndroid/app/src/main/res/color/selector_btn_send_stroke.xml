@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 发送按钮描边颜色：正常状态蓝色，点击状态也是蓝色 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true" android:color="#007AFF"/>
+    <item android:color="#007AFF"/>
+</selector>

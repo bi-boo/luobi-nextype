@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 上滑弹窗按钮 - 与底部通用按钮样式完全一致 -->
+<com.google.android.material.button.MaterialButton
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/swipePopupButton"
+    android:layout_width="match_parent"
+    android:layout_height="56dp"
+    android:text="上滑发送"
+    android:textSize="14sp"
+    android:textColor="@android:color/white"
+    android:singleLine="true"
+    android:minWidth="0dp"
+    android:paddingStart="8dp"
+    android:paddingEnd="12dp"
+    style="@style/Widget.Material3.Button"
+    app:backgroundTint="@color/accent"
+    app:strokeColor="@color/accent"
+    app:strokeWidth="@dimen/border_width"
+    app:cornerRadius="@dimen/radius_pill"
+    app:elevation="0dp"
+    app:rippleColor="@android:color/transparent"
+    android:fontFamily="sans-serif-medium"
+    app:icon="@drawable/ic_sync"
+    app:iconGravity="textStart"
+    app:iconTint="@android:color/white"
+    app:iconSize="18dp"
+    app:iconPadding="4dp" />

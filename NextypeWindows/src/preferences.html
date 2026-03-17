@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>偏好设置</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        // 深度调试：全局错误捕获
+        window.onerror = function (message, source, lineno, colno, error) {
+            console.error('[Preferences-Global-Error]', { message, source, lineno, colno, error });
+            // 如果是严重错误，弹出提示，方便用户反馈
+            // alert('页面加载出错: ' + message);
+        };
+    </script>
+</head>
+
+<body>
+    <!-- Contribution Graph Tooltip -->
+    <div id="contribution-tooltip"></div>
+
+    <!-- SVG Icons -->
+    <svg style="display: none;">
+        <symbol id="icon-general" viewBox="0 0 24 24">
+            <path
+                d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z" />
+        </symbol>
+        <symbol id="icon-mobile" viewBox="0 0 24 24">
+            <path
+                d="M17,1.01L7,1C5.9,1,5,1.9,5,3v18c0,1.1,0.9,2,2,2h10c1.1,0,2-0.9,2-2V3C19,1.9,18.1,1.01,17,1.01z M17,19H7V5h10V19z" />
+        </symbol>
+        <symbol id="icon-android" viewBox="0 0 24 24">
+            <path
+                d="M6,18c0,0.55,0.45,1,1,1h1v3.5C8,23.33,8.67,24,9.5,24s1.5-0.67,1.5-1.5V19h2v3.5c0,0.83,0.67,1.5,1.5,1.5 s1.5-0.67,1.5-1.5V19h1c0.55,0,1-0.45,1-1V8H6V18z M3.5,8C2.67,8,2,8.67,2,9.5v7C2,17.33,2.67,18,3.5,18S5,17.33,5,16.5v-7 C5,8.67,4.33,8,3.5,8z M20.5,8C19.67,8,19,8.67,19,9.5v7c0,0.83,0.67,1.5,1.5,1.5s1.5-0.67,1.5-1.5v-7C22,8.67,21.33,8,20.5,8z M15.53,2.16l1.3-1.3c0.2-0.2,0.2-0.51,0-0.71c-0.2-0.2-0.51-0.2-0.71,0l-1.48,1.48C13.85,1.23,12.95,1,12,1 c-0.96,0-1.86,0.23-2.66,0.63L7.85,0.15c-0.2-0.2-0.51-0.2-0.71,0c-0.2,0.2-0.2,0.51,0,0.71l1.31,1.31C6.97,3.26,6,5.01,6,7h12 C18,5.01,17.03,3.25,15.53,2.16z M10,5H9V4h1V5z M15,5h-1V4h1V5z" />
+        </symbol>
+        <symbol id="icon-ios" viewBox="0 0 24 24">
+            <path
+                d="M18.71,19.5C17.88,20.74,17,21.95,15.66,21.97C14.32,22,13.89,21.18,12.37,21.18C10.84,21.18,10.37,21.95,9.1,22C7.79,22.05,6.8,20.68,5.96,19.47C4.25,17,2.94,12.45,4.7,9.39C5.57,7.87,7.13,6.91,8.82,6.88C10.1,6.86,11.32,7.75,12.11,7.75C12.89,7.75,14.37,6.68,15.92,6.84C16.57,6.87,18.39,7.1,19.56,8.82C19.47,8.88,17.39,10.1,17.41,12.63C17.44,15.65,20.06,16.66,20.09,16.67C20.06,16.74,19.67,18.11,18.71,19.5M13,3.5C13.73,2.67,14.94,2.04,15.94,2C16.07,3.17,15.6,4.35,14.9,5.19C14.21,6.04,13.07,6.7,11.95,6.61C11.8,5.46,12.36,4.26,13,3.5Z" />
+        </symbol>
+        <symbol id="icon-stats" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                d="M3,3v18h18 M7,17v-5 M12,17V7 M17,17v-3" />
+        </symbol>
+        <symbol id="icon-history" viewBox="0 0 24 24">
+            <path
+                d="M13,3c-4.97,0-9,4.03-9,9H1l3.89,3.89l0.07,0.14L9,12H6c0-3.87,3.13-7,7-7s7,3.13,7,7s-3.13,7-7,7c-1.93,0-3.68-0.79-4.94-2.06l-1.42,1.42C8.27,19.99,10.51,21,13,21c4.97,0,9-4.03,9-9S17.97,3,13,3z M12,8v5l4.28,2.54l0.72-1.21l-3.5-2.08V8H12z" />
+        </symbol>
+        <symbol id="icon-about" viewBox="0 0 24 24">
+            <circle fill="none" stroke="currentColor" stroke-width="2" cx="12" cy="12" r="9" />
+            <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12,8v0.5 M12,11v5" />
+        </symbol>
+        <symbol id="icon-hotkey" viewBox="0 0 24 24">
+            <rect x="2" y="4" width="20" height="16" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2" />
+            <rect x="5" y="8" width="3" height="3" rx="0.5" fill="currentColor" />
+            <rect x="10" y="8" width="4" height="3" rx="0.5" fill="currentColor" />
+            <rect x="16" y="8" width="3" height="3" rx="0.5" fill="currentColor" />
+            <rect x="5" y="13" width="14" height="3" rx="0.5" fill="currentColor" />
+        </symbol>
+    </svg>
+
+    <!-- Draggable Title Bar -->
+    <div class="titlebar" data-tauri-drag-region></div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-item active" data-tab="general">
+            <svg class="sidebar-icon">
+                <use href="#icon-general" />
+            </svg>
+            <span>基础设置</span>
+        </div>
+        <div class="sidebar-item" data-tab="devices">
+            <svg class="sidebar-icon">
+                <use href="#icon-mobile" />
+            </svg>
+            <span>配对手机</span>
+        </div>
+        <div class="sidebar-item" data-tab="hotkeys">
+            <svg class="sidebar-icon">
+                <use href="#icon-hotkey" />
+            </svg>
+            <span>控制手机</span>
+        </div>
+        <div class="sidebar-item" data-tab="stats">
+            <svg class="sidebar-icon">
+                <use href="#icon-stats" />
+            </svg>
+            <span>使用数据</span>
+        </div>
+        <div class="sidebar-item" data-tab="about">
+            <svg class="sidebar-icon">
+                <use href="#icon-about" />
+            </svg>
+            <span>关于和反馈</span>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- General Settings -->
+        <div id="general" class="tab-content active">
+            <div class="settings-group">
+                <div class="setting-item">
+                    <div>
+                        <div class="setting-label">开机启动</div>
+                        <div class="setting-desc">电脑启动时，自动运行应用</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="autoLaunch">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <div>
+                        <div class="setting-label">菜单栏图标</div>
+                        <div class="setting-desc">在屏幕顶部菜单栏，显示应用图标</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="showMenuBarIcon" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <div>
+                        <div class="setting-label">Dock 栏图标</div>
+                        <div class="setting-desc">在屏幕底部 Dock 栏，显示应用图标</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="showDockIcon" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <!-- 警告提示：不能同时关闭两个图标 -->
+                <div id="iconVisibilityWarning"
+                    style="display: none; padding: 12px 20px; color: var(--text-secondary); font-size: 13px; border-top: 1px solid var(--border);">
+                    至少需要保留一个图标用于访问应用
+                </div>
+                <div class="setting-item">
+                    <div>
+                        <div class="setting-label">清空剪贴板</div>
+                        <div class="setting-desc">每次模拟粘贴动作后，清空剪贴板</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="clearAfterPaste">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="section-header">系统权限</div>
+            <div class="settings-group">
+                <div class="setting-item" style="cursor: pointer;" id="accessibilityPermission">
+                    <div style="flex: 1;">
+                        <div class="setting-label">辅助功能权限</div>
+                        <div class="setting-desc">用于自动粘贴功能，点击跳转系统设置</div>
+                    </div>
+                    <label class="switch" style="pointer-events: none;">
+                        <input type="checkbox" id="accessibilitySwitch" disabled>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+
+
+
+        <!-- Trusted Devices / Connect Phone -->
+        <div id="devices" class="tab-content">
+            <!-- 区域1：配对码 -->
+            <div class="section-header">配对码</div>
+            <div id="pairingSection"
+                style="background: var(--bg-card); padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">请在手机端输入此配对码</div>
+                <div id="pairingCode"
+                    style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: var(--accent); font-family: monospace;">
+                    ----</div>
+                <div id="pairingTimer" style="font-size: 12px; color: var(--text-tertiary); margin-top: 8px;">60秒后过期
+                </div>
+                <button id="btnRefreshCode"
+                    style="margin-top: 12px; background: var(--accent); color: white; border: none; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500;">刷新配对码</button>
+            </div>
+
+            <!-- 区域2：已连接设备 -->
+            <div class="section-header">已连接设备</div>
+            <div class="settings-group" id="trustedDevicesContainer" style="margin-bottom: 20px;">
+                <div class="setting-item" style="justify-content: center; color: var(--text-tertiary);">
+                    暂无关联设备
+                </div>
+            </div>
+
+            <!-- 区域3：下载手机端应用 -->
+            <div class="section-header">下载手机端应用</div>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn" id="btnDownloadAndroid"
+                    style="flex: 1; height: 44px; font-size: 13px; font-weight: 500; background: var(--bg-card); color: var(--text-primary); border: none; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">
+                    <svg style="width: 18px; height: 18px; fill: #3DDC84;" viewBox="0 0 24 24">
+                        <path
+                            d="M17.6,9.48l1.84-3.18c0.16-0.31,0.04-0.69-0.26-0.85c-0.29-0.15-0.65-0.06-0.83,0.22l-1.88,3.24 c-2.86-1.21-6.08-1.21-8.94,0L5.65,5.67C5.47,5.39,5.11,5.3,4.82,5.45C4.52,5.61,4.4,5.99,4.56,6.3l1.84,3.18 C3.33,11.25,1.72,14.5,1.72,18h20.56C22.28,14.5,20.67,11.25,17.6,9.48z M7.12,15.5c-0.85,0-1.54-0.69-1.54-1.54 s0.69-1.54,1.54-1.54s1.54,0.69,1.54,1.54S7.97,15.5,7.12,15.5z M16.88,15.5c-0.85,0-1.54-0.69-1.54-1.54s0.69-1.54,1.54-1.54 s1.54,0.69,1.54,1.54S17.73,15.5,16.88,15.5z" />
+                    </svg>
+                    Android 版
+                </button>
+                <button class="btn" id="btnDownloadiOS"
+                    style="flex: 1; height: 44px; font-size: 13px; font-weight: 500; background: var(--bg-card); color: var(--text-primary); border: none; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">
+                    <svg style="width: 18px; height: 18px; fill: #555;" viewBox="0 0 24 24">
+                        <path
+                            d="M18.71,19.5C17.88,20.74 17,21.95 15.66,21.97C14.32,22 13.89,21.18 12.37,21.18C10.84,21.18 10.37,21.95 9.1,22C7.79,22.05 6.8,20.68 5.96,19.47C4.25,17 2.94,12.45 4.7,9.39C5.57,7.87 7.13,6.91 8.82,6.88C10.1,6.86 11.32,7.75 12.11,7.75C12.89,7.75 14.37,6.68 15.92,6.84C16.57,6.87 18.39,7.1 19.56,8.82C19.47,8.88 17.39,10.1 17.41,12.63C17.44,15.65 20.06,16.66 20.09,16.67C20.06,16.74 19.67,18.11 18.71,19.5M13,3.5C13.73,2.67 14.94,2.04 15.94,2C16.07,3.17 15.6,4.35 14.9,5.19C14.21,6.04 13.07,6.7 11.95,6.61C11.8,5.46 12.36,4.26 13,3.5Z" />
+                    </svg>
+                    iOS 版
+                </button>
+            </div>
+        </div>
+
+
+        <!-- Statistics -->
+        <div id="stats" class="tab-content">
+            <div id="statsList" style="display: flex; flex-direction: column; gap: 0; margin-bottom: 16px;">
+                <div
+                    style="background: var(--bg-card); border-radius: 12px 12px 0 0; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 14px; color: var(--text-primary);">同步次数</div>
+                    <div style="font-size: 24px; font-weight: 400; color: var(--text-primary); font-variant-numeric: tabular-nums;"
+                        id="totalPastes">0</div>
+                </div>
+                <div
+                    style="background: var(--bg-card); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 14px; color: var(--text-primary);">今日同步字数</div>
+                    <div style="font-size: 24px; font-weight: 400; color: var(--text-primary); font-variant-numeric: tabular-nums;"
+                        id="todayChars">0</div>
+                </div>
+                <div
+                    style="background: var(--bg-card); border-radius: 0 0 12px 12px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 14px; color: var(--text-primary);">累计同步字数</div>
+                    <div style="font-size: 24px; font-weight: 400; color: var(--text-primary); font-variant-numeric: tabular-nums;"
+                        id="totalChars">0</div>
+                </div>
+            </div>
+
+            <!-- GitHub 风格贡献点阵图 -->
+            <div class="contribution-graph-card" id="contributionGraphCard">
+                <div class="contribution-graph-header">过去半年活跃度</div>
+                <div class="contribution-graph-body">
+                    <div class="contribution-day-labels">
+                        <span class="contribution-day-label">一</span>
+                        <span class="contribution-day-label">二</span>
+                        <span class="contribution-day-label">三</span>
+                        <span class="contribution-day-label">四</span>
+                        <span class="contribution-day-label">五</span>
+                        <span class="contribution-day-label">六</span>
+                        <span class="contribution-day-label">日</span>
+                    </div>
+                    <div class="contribution-grid" id="contributionGrid"></div>
+                </div>
+                <div class="contribution-footer">
+                    <span class="contribution-legend-label">少</span>
+                    <div class="contribution-legend-cell" data-level="0"></div>
+                    <div class="contribution-legend-cell contribution-legend-cell--colored" data-level="1"></div>
+                    <div class="contribution-legend-cell contribution-legend-cell--colored" data-level="2"></div>
+                    <div class="contribution-legend-cell contribution-legend-cell--colored" data-level="3"></div>
+                    <div class="contribution-legend-cell contribution-legend-cell--colored" data-level="4"></div>
+                    <span class="contribution-legend-label">多</span>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="setting-item">
+                    <div>
+                        <div class="setting-label">启用统计功能</div>
+                        <div class="setting-desc">关闭后将不再记录统计数据</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="enableStats">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hotkeys Settings -->
+        <div id="hotkeys" class="tab-content">
+            <!-- 第一组：快捷键 -->
+            <div class="section-header">控制手机端按钮</div>
+            <div class="settings-group">
+                <div class="setting-item">
+                    <div>
+                        <div class="setting-label">点击「发送」</div>
+                        <div class="setting-desc">将手机端内容，发送至电脑，并粘贴回车</div>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="text" class="hotkey-input" id="hotkeysSend" placeholder="点击录入" readonly>
+                        <button class="hotkey-clear-btn" data-for="hotkeysSend" title="清除快捷键">✕</button>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <div>
+                        <div class="setting-label">点击「插入」</div>
+                        <div class="setting-desc">将手机端内容，发送至电脑并粘贴</div>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="text" class="hotkey-input" id="hotkeysInsert" placeholder="点击录入" readonly>
+                        <button class="hotkey-clear-btn" data-for="hotkeysInsert" title="清除快捷键">✕</button>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <div>
+                        <div class="setting-label">点击「清空」</div>
+                        <div class="setting-desc">清空手机端输入的内容</div>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="text" class="hotkey-input" id="hotkeysClear" placeholder="点击录入" readonly>
+                        <button class="hotkey-clear-btn" data-for="hotkeysClear" title="清除快捷键">✕</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第二组：模拟点击 -->
+            <div class="section-header">模拟手机端点击</div>
+            <!-- 整个模块用一个外层容器包裹，实现统一边框 -->
+            <div class="settings-group" style="padding: 0; overflow: hidden;">
+                <!-- 快捷键设置 -->
+                <div class="setting-item">
+                    <div>
+                        <div class="setting-label">点击指定坐标</div>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="text" class="hotkey-input" id="hotkeysTap" placeholder="点击录入" readonly>
+                        <button class="hotkey-clear-btn" data-for="hotkeysTap" title="清除快捷键">✕</button>
+                    </div>
+                </div>
+                <!-- 坐标配置容器 -->
+                <div id="tapScreenConfigsContainer" style="display: flex; flex-direction: column;">
+                </div>
+                <div id="noTapScreenConfigTip"
+                    style="padding: 20px; text-align: center; color: var(--text-tertiary); font-size: 13px; border-top: 1px dashed var(--border-color); display: none;">
+                    📱 暂无屏幕配置。请连接手机并尝试切换折叠/旋转状态，系统将自动识别并添加新尺寸。
+                </div>
+            </div>
+
+            <!-- 第三组：模拟长按（暂时隐藏） -->
+            <div class="section-header" style="margin-top: 24px; display: none;">模拟长按</div>
+            <!-- 整个模块用一个外层容器包裹，实现统一边框 -->
+            <div class="settings-group" style="padding: 0; overflow: hidden; margin-bottom: 24px; display: none;">
+                <!-- 快捷键设置 -->
+                <div class="setting-item">
+                    <div>
+                        <div class="setting-label">快捷键</div>
+                        <div class="setting-desc">长按手机屏幕指定坐标（需开启辅助功能）</div>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="text" class="hotkey-input" id="hotkeysLongpress" placeholder="点击录入" readonly>
+                        <button class="hotkey-clear-btn" data-for="hotkeysLongpress" title="清除快捷键">✕</button>
+                    </div>
+                </div>
+                <!-- 自动插入设置 -->
+                <div class="setting-item">
+                    <div style="flex: 1;">
+                        <div class="setting-label">释放后自动插入</div>
+                        <div class="setting-desc">长按释放后自动发送插入指令</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 12px; color: var(--text-secondary);">延时</span>
+                        <input type="number" id="longpressAutoInsertDelay" min="0" max="5000" step="50" value="300"
+                            style="width: 60px; padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-input); color: var(--text-primary); font-size: 12px;">
+                        <span style="font-size: 12px; color: var(--text-secondary);">ms</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="longpressAutoInsert">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <!-- 坐标配置容器 -->
+                <div id="longpressScreenConfigsContainer" style="display: flex; flex-direction: column;">
+                </div>
+                <div id="noLongpressScreenConfigTip"
+                    style="padding: 20px; text-align: center; color: var(--text-tertiary); font-size: 13px; border-top: 1px dashed var(--border-color); display: none;">
+                    📱 暂无屏幕配置。请连接手机并尝试切换折叠/旋转状态，系统将自动识别并添加新尺寸。
+                </div>
+            </div>
+        </div>
+
+        <!-- About -->
+        <div id="about" class="tab-content">
+            <div class="about-container">
+                <img src="icon.png" class="app-logo" alt="Logo">
+                <div class="app-title">落笔 Nextype</div>
+                <div class="app-version" id="version">版本 1.0.0</div>
+
+                <div class="settings-group" style="text-align: left;">
+                    <a class="setting-item" style="cursor: pointer; text-decoration: none; color: inherit; -webkit-user-select: none;"
+                        onclick="openExternal('https://nextype.yuanfengai.cn/')">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <!-- 检查更新 icon：刷新箭头 -->
+                            <svg style="width: 16px; height: 16px; fill: var(--text-secondary); flex-shrink: 0;" viewBox="0 0 24 24">
+                                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                            </svg>
+                            <div class="setting-label">检查更新</div>
+                        </div>
+                        <svg style="width: 16px; height: 16px; fill: var(--text-tertiary); flex-shrink: 0;" viewBox="0 0 24 24">
+                            <path d="M8.59,16.59L13.17,12L8.59,7.41L10,6l6,6l-6,6L8.59,16.59z" />
+                        </svg>
+                    </a>
+                    <a class="setting-item" style="cursor: pointer; text-decoration: none; color: inherit; -webkit-user-select: none;"
+                        onclick="openExternal('mailto:hi.baozheng@gmail.com')">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <!-- 反馈 icon：邮件 -->
+                            <svg style="width: 16px; height: 16px; fill: var(--text-secondary); flex-shrink: 0;" viewBox="0 0 24 24">
+                                <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                            </svg>
+                            <div class="setting-label">我要反馈</div>
+                        </div>
+                        <svg style="width: 16px; height: 16px; fill: var(--text-tertiary); flex-shrink: 0;" viewBox="0 0 24 24">
+                            <path d="M8.59,16.59L13.17,12L8.59,7.41L10,6l6,6l-6,6L8.59,16.59z" />
+                        </svg>
+                    </a>
+                    <a class="setting-item" style="cursor: pointer; text-decoration: none; color: inherit; -webkit-user-select: none;"
+                        onclick="openExternal('')">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <!-- GitHub icon -->
+                            <svg style="width: 16px; height: 16px; fill: var(--text-secondary); flex-shrink: 0;" viewBox="0 0 24 24">
+                                <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+                            </svg>
+                            <div class="setting-label">GitHub</div>
+                        </div>
+                        <svg style="width: 16px; height: 16px; fill: var(--text-tertiary); flex-shrink: 0;" viewBox="0 0 24 24">
+                            <path d="M8.59,16.59L13.17,12L8.59,7.41L10,6l6,6l-6,6L8.59,16.59z" />
+                        </svg>
+                    </a>
+                </div>
+
+                <div class="copyright" style="position: absolute; bottom: 24px; left: 0; right: 0;">
+                    Copyright © 2025 BaoZheng. All rights reserved.
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const invoke = window.__TAURI__.core.invoke;
+            const listen = window.__TAURI__.event.listen;
+
+            // 保存前一次配置，用于 saveConfig 时对比哪些值真正变化
+            let _lastSavedConfig = {};
+
+            let initialized = false;
+            async function startInitialization() {
+                if (initialized) return;
+                initialized = true;
+                console.log('[Preferences] 页面逻辑开始初始化, 状态:', document.readyState);
+
+                // 执行核心逻辑
+                initializePreferences();
+            }
+
+            // 立即检查 URL Hash (即使在脚本加载前也可能有用)
+            function checkHashNavigation() {
+                const hash = window.location.hash.replace('#', '');
+                if (hash) {
+                    console.log('[Preferences] 初始 Hash 导航:', hash);
+                    const button = document.querySelector(`.sidebar-item[data-tab="${hash}"]`);
+                    if (button) {
+                        // 如果尚未完全初始化，我们只记录意图
+                        window.__INITIAL_TAB__ = hash;
+                        // 尝试执行切换 (如果 DOM 已准备好)
+                        const items = document.querySelectorAll('.sidebar-item');
+                        if (items.length > 0) {
+                            button.click();
+                        }
+                    }
+                }
+            }
+
+            // 保障机制：如果 DOM 已经就绪（例如在脚本加载前），立即执行
+            if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                checkHashNavigation();
+                startInitialization();
+            } else {
+                document.addEventListener('DOMContentLoaded', () => {
+                    checkHashNavigation();
+                    startInitialization();
+                });
+            }
+
+            // 打开外部链接的辅助函数（全局作用域，供 HTML inline onclick 调用）
+            async function openExternal(url) {
+                try {
+                    // 优先使用 opener 插件，fallback 到 shell 插件
+                    const opener = window.__TAURI_PLUGIN_OPENER__;
+                    if (opener && opener.openUrl) {
+                        await opener.openUrl(url);
+                    } else if (window.__TAURI__ && window.__TAURI__.opener && window.__TAURI__.opener.openUrl) {
+                        await window.__TAURI__.opener.openUrl(url);
+                    } else {
+                        // fallback: 通过 shell 插件打开
+                        await invoke('plugin:shell|open', { path: url });
+                    }
+                } catch (e) {
+                    console.error('打开链接失败:', e);
+                }
+            }
+
+            function initializePreferences() {
+                console.log('[Preferences] 正在绑定组件和加载配置...');
+
+                // Parse device info
+                function parseDeviceInfo(device) {
+                    return (device.name && device.name !== 'Unknown Device')
+                        ? device.name
+                        : 'Unknown Device';
+                }
+
+                // Tab Switching
+                console.log('[Preferences] 找到的侧边栏项数量:', document.querySelectorAll('.sidebar-item').length);
+                document.querySelectorAll('.sidebar-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const tabId = item.dataset.tab;
+                        console.log('[Preferences] 切换到标签页:', tabId);
+
+                        document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                        item.classList.add('active');
+
+                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                        const targetTab = document.getElementById(tabId);
+                        if (targetTab) {
+                            targetTab.classList.add('active');
+                            console.log('[Preferences] 已激活标签页:', tabId);
+                        } else {
+                            console.error('[Preferences] 未找到标签页元素:', tabId);
+                        }
+
+                        if (tabId === 'stats') loadStats();
+
+                        // 同步到 Hash，方便刷新或重新打开
+                        window.location.hash = tabId;
+
+                        // Auto generate pairing code when clicking the tab
+                        if (tabId === 'devices') {
+                            const pairingCode = document.getElementById('pairingCode');
+                            const btnRefreshCode = document.getElementById('btnRefreshCode');
+                            if (pairingCode && pairingCode.textContent.trim() === '----') {
+                                requestPairingCode();
+                                if (btnRefreshCode) {
+                                    btnRefreshCode.disabled = true;
+                                    btnRefreshCode.textContent = '生成中...';
+                                }
+                            }
+                        }
+                    });
+                });
+
+                // Settings Elements
+                const elements = {
+                    showMenuBarIcon: document.getElementById('showMenuBarIcon'),
+                    showDockIcon: document.getElementById('showDockIcon'),
+                    iconVisibilityWarning: document.getElementById('iconVisibilityWarning'),
+                    clearAfterPaste: document.getElementById('clearAfterPaste'),
+                    autoLaunch: document.getElementById('autoLaunch'),
+                    enableStats: document.getElementById('enableStats'),
+                    btnRefreshCode: document.getElementById('btnRefreshCode'),
+                    pairingSection: document.getElementById('pairingSection'),
+                    pairingCode: document.getElementById('pairingCode'),
+                    pairingTimer: document.getElementById('pairingTimer'),
+                    longpressAutoInsert: document.getElementById('longpressAutoInsert'),
+                    longpressAutoInsertDelay: document.getElementById('longpressAutoInsertDelay'),
+                };
+
+                let currentConfig = {};
+                let pairingTimerInterval = null;
+
+                // Debounce utility
+                function debounce(func, wait) {
+                    let timeout;
+                    return function (...args) {
+                        const context = this;
+                        clearTimeout(timeout);
+                        timeout = setTimeout(() => func.apply(context, args), wait);
+                    };
+                }
+
+                // 检查图标可见性，确保至少保留一个
+                function updateIconVisibilityWarning() {
+                    const bothHidden = !elements.showMenuBarIcon.checked && !elements.showDockIcon.checked;
+                    elements.iconVisibilityWarning.style.display = bothHidden ? 'block' : 'none';
+                    return bothHidden;
+                }
+
+                // 显示临时提示
+                function showIconWarning() {
+                    elements.iconVisibilityWarning.style.display = 'block';
+                    // 2秒后自动隐藏
+                    setTimeout(() => {
+                        elements.iconVisibilityWarning.style.display = 'none';
+                    }, 2000);
+                }
+
+                // Unified Save Function
+                async function saveConfig() {
+                    // 如果尚未加载配置，禁止覆盖保存
+                    if (!currentConfig || Object.keys(currentConfig).length === 0) {
+                        console.warn('[Preferences] 尚未加载初始配置，跳过保存');
+                        return;
+                    }
+
+                    const newConfig = {
+                        ...currentConfig,
+                        showMenuBarIcon: elements.showMenuBarIcon.checked,
+                        showDockIcon: elements.showDockIcon.checked,
+                        clearAfterPaste: elements.clearAfterPaste.checked,
+                        autoLaunch: elements.autoLaunch.checked,
+                        enableStats: elements.enableStats.checked,
+                        longpressAutoInsert: elements.longpressAutoInsert.checked,
+                        longpressAutoInsertDelay: parseInt(elements.longpressAutoInsertDelay.value) || 300,
+                    };
+
+                    // 获取保存前的旧配置，用于对比哪些值真正变化了
+                    const prevConfig = _lastSavedConfig || {};
+
+                    // 先保存配置
+                    await invoke('save_config', { config: newConfig });
+
+                    // 只在值真正变化时才调用系统设置命令
+                    // 避免无关开关切换时重复应用 ActivationPolicy 等导致窗口意外关闭
+                    try {
+                        if (newConfig.autoLaunch !== undefined && newConfig.autoLaunch !== prevConfig.autoLaunch) {
+                            await invoke('set_autostart_enabled', { enabled: newConfig.autoLaunch });
+                        }
+                        if (newConfig.showDockIcon !== undefined && newConfig.showDockIcon !== prevConfig.showDockIcon) {
+                            await invoke('set_dock_icon_visible', { visible: newConfig.showDockIcon });
+                        }
+                        if (newConfig.showMenuBarIcon !== undefined && newConfig.showMenuBarIcon !== prevConfig.showMenuBarIcon) {
+                            await invoke('set_menu_bar_icon_visible', { visible: newConfig.showMenuBarIcon });
+                        }
+                    } catch (e) {
+                        console.error('[Preferences] 系统设置应用异常:', e);
+                    }
+
+                    // 记录本次配置作为下次对比基准
+                    _lastSavedConfig = { ...newConfig };
+
+                    // 同步获取更新后的完整配置并加载
+                    const updatedConfig = await invoke('get_config');
+                    loadConfig(updatedConfig);
+                }
+
+                const debouncedSave = debounce(saveConfig, 500);
+
+                // 菜单栏图标开关：当 Dock 图标已关闭时，阻止关闭菜单栏图标
+                elements.showMenuBarIcon.addEventListener('change', (e) => {
+                    if (!e.target.checked && !elements.showDockIcon.checked) {
+                        // 阻止关闭，恢复开关状态
+                        e.target.checked = true;
+                        showIconWarning();
+                        return;
+                    }
+                    saveConfig();
+                });
+
+                // Dock 栏图标开关：当菜单栏图标已关闭时，阻止关闭 Dock 图标
+                elements.showDockIcon.addEventListener('change', (e) => {
+                    if (!e.target.checked && !elements.showMenuBarIcon.checked) {
+                        // 阻止关闭，恢复开关状态
+                        e.target.checked = true;
+                        showIconWarning();
+                        return;
+                    }
+                    saveConfig();
+                });
+
+                elements.clearAfterPaste.addEventListener('change', saveConfig);
+
+                // Stats Toggle
+                function updateStatsVisibility() {
+                    const statsList = document.getElementById('statsList');
+                    const graphCard = document.getElementById('contributionGraphCard');
+                    const visible = elements.enableStats.checked;
+                    statsList.style.display = visible ? 'flex' : 'none';
+                    if (graphCard) graphCard.style.display = visible ? 'block' : 'none';
+                }
+                elements.enableStats.addEventListener('change', () => { updateStatsVisibility(); saveConfig(); });
+
+                // Auto Launch
+                elements.autoLaunch.addEventListener('change', saveConfig);
+
+                // Auto Insert settings
+                elements.longpressAutoInsert.addEventListener('change', saveConfig);
+                elements.longpressAutoInsertDelay.addEventListener('change', saveConfig);
+
+                // Accessibility Permission
+                const accessibilityPermission = document.getElementById('accessibilityPermission');
+                const accessibilitySwitch = document.getElementById('accessibilitySwitch');
+
+                // Check permission status on load
+                invoke('has_accessibility_permission').then(hasPermission => {
+                    accessibilitySwitch.checked = hasPermission;
+                });
+
+                // Click to open system settings
+                accessibilityPermission.addEventListener('click', () => {
+                    console.log('[Preferences] 打开辅助功能设置');
+                    invoke('open_accessibility_settings');
+                });
+
+                // Check permission when window gains focus (lightweight, no polling)
+                window.addEventListener('focus', () => {
+                    invoke('has_accessibility_permission').then(hasPermission => {
+                        accessibilitySwitch.checked = hasPermission;
+                    });
+                });
+
+                // Load Config - 提取为命名函数，供多处调用
+                function loadConfig(config) {
+                    console.log('[调试] 加载配置, trustedDevices:', config.trustedDevices);
+                    currentConfig = config;
+                    elements.showMenuBarIcon.checked = config.showMenuBarIcon !== undefined ? config.showMenuBarIcon : true;
+                    elements.showDockIcon.checked = config.showDockIcon !== undefined ? config.showDockIcon : true;
+                    elements.clearAfterPaste.checked = config.clearAfterPaste !== undefined ? config.clearAfterPaste : false;
+                    elements.autoLaunch.checked = config.autoLaunch !== undefined ? config.autoLaunch : true;
+                    elements.enableStats.checked = config.enableStats !== undefined ? config.enableStats : true;
+                    elements.longpressAutoInsert.checked = config.longpressAutoInsert || false;
+                    elements.longpressAutoInsertDelay.value = config.longpressAutoInsertDelay || 300;
+                    updateStatsVisibility();
+                    updateIconVisibilityWarning();
+                    renderTrustedDevices(config.trustedDevices || []);
+                }
+
+                // 监听后端配置更新事件
+                listen('config_updated', (e) => {
+                    loadConfig(e.payload);
+                });
+
+                // Render Trusted Devices
+                function renderTrustedDevices(devices) {
+                    const container = document.getElementById('trustedDevicesContainer');
+                    if (!devices || devices.length === 0) {
+                        container.innerHTML = '<div class="setting-item" style="justify-content: center; color: var(--text-tertiary);">暂无关联设备</div>';
+                        return;
+                    }
+
+                    // Android phone icon SVG (phone with notch - Android style)
+                    const androidIcon = '<svg style="width: 18px; height: 18px; margin-right: 10px; flex-shrink: 0;" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2" fill="none" stroke="#86868b" stroke-width="1.5"/><rect x="9" y="4" width="6" height="2" rx="1" fill="#86868b"/><circle cx="12" cy="18" r="1.2" fill="#86868b"/></svg>';
+                    // iOS phone icon SVG (phone with Dynamic Island - iPhone style)
+                    const iosIcon = '<svg style="width: 18px; height: 18px; margin-right: 10px; flex-shrink: 0;" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="3" ry="3" fill="none" stroke="#86868b" stroke-width="1.5"/><rect x="9" y="4" width="6" height="1.5" rx="0.75" fill="#86868b"/></svg>';
+
+                    let html = '';
+                    devices.forEach(device => {
+                        const name = typeof device === 'string' ? 'Unknown' : parseDeviceInfo(device);
+                        const id = typeof device === 'string' ? device : device.id;
+
+                        // Determine icon based on device name (contains iPhone or iPad)
+                        const deviceName = typeof device === 'string' ? '' : (device.name || '');
+                        let icon = androidIcon; // default
+                        if (deviceName.toLowerCase().includes('iphone') || deviceName.toLowerCase().includes('ipad')) {
+                            icon = iosIcon;
+                        }
+
+                        html += `
+                    <div class="device-item">
+                        <div class="device-info" style="display: flex; align-items: center;">
+                            ${icon}
+                            <div class="device-name">${name}</div>
+                        </div>
+                        <button class="btn" onclick="removeDevice('${id}')" style="color: var(--danger);">解除</button>
+                    </div>
+                `;
+                    });
+                    container.innerHTML = html;
+                }
+
+                window.removeDevice = async function (id) {
+                    // 先通知中继服务器解除配对（可能未连接，需 try-catch）
+                    try {
+                        await invoke('relay_unpair_device', { deviceId: id });
+                    } catch (e) {
+                        console.warn('[Preferences] 通知中继服务器解除配对失败（可能未连接）:', e);
+                    }
+                    await invoke('remove_trusted_device', { deviceId: id });
+                    const freshConfig = await invoke('get_config');
+                    loadConfig(freshConfig);
+                };
+
+                // Pairing Logic - 请求配对码的统一函数
+                async function requestPairingCode(forceRandom = false) {
+                    try {
+                        const pairingResult = await invoke('generate_pairing_code', { forceRandom });
+                        handlePairingCode({
+                            code: pairingResult.code,
+                            expiresIn: pairingResult.expires_in || pairingResult.expiresIn || 60
+                        });
+                    } catch (e) {
+                        console.error('[Preferences] 生成配对码失败:', e);
+                        handlePairingCode({ code: '----', expiresIn: 0 });
+                    }
+                }
+
+                elements.btnRefreshCode.addEventListener('click', () => {
+                    requestPairingCode();
+                    elements.btnRefreshCode.disabled = true;
+                    elements.btnRefreshCode.textContent = '生成中...';
+                });
+
+                // 监听中继服务器注册的配对码（服务端推送）
+                listen('relay:code_registered', (e) => {
+                    const payload = e.payload;
+                    handlePairingCode({
+                        code: payload.code || '----',
+                        expiresIn: payload.expiresIn || payload.expires_in || 60
+                    });
+                });
+
+                function handlePairingCode(payload) {
+                    const code = payload.code || '----';
+                    const expiresIn = payload.expiresIn || 60;
+
+                    elements.pairingCode.textContent = code;
+                    elements.btnRefreshCode.disabled = false;
+                    elements.btnRefreshCode.textContent = '刷新配对码';
+
+                    // Start Timer
+                    let timeLeft = expiresIn;
+                    if (pairingTimerInterval) clearInterval(pairingTimerInterval);
+
+                    elements.pairingTimer.textContent = `${timeLeft}秒后过期`;
+
+                    pairingTimerInterval = setInterval(() => {
+                        timeLeft--;
+                        elements.pairingTimer.textContent = `${timeLeft}秒后过期`;
+                        if (timeLeft <= 0) {
+                            clearInterval(pairingTimerInterval);
+                            elements.pairingTimer.textContent = '配对码已过期，请刷新';
+                            elements.pairingCode.textContent = '----';
+                        }
+                    }, 1000);
+                }
+
+                // 配对成功处理（UI 反馈 + 自动刷新）
+                listen('relay:pairing_completed', async (e) => {
+                    const deviceName = e.payload.deviceName || (typeof e.payload === 'string' ? e.payload : 'Unknown Device');
+                    console.log('[Preferences] 收到配对成功通知:', deviceName);
+                    if (pairingTimerInterval) clearInterval(pairingTimerInterval);
+
+                    // UI反馈：显示成功提示
+                    elements.pairingCode.textContent = 'DONE';
+                    elements.pairingTimer.textContent = `已成功配对: ${deviceName}`;
+
+                    // 配对成功后自动重新生成配对码，保持配对区域可用
+                    setTimeout(() => {
+                        if (!elements.btnRefreshCode.disabled) {
+                            requestPairingCode();
+                        }
+                    }, 2000);
+
+                    // 强制刷新配置以更新设备列表
+                    const freshConfig = await invoke('get_config');
+                    loadConfig(freshConfig);
+                });
+
+                // 关于页面的按钮事件（通过 HTML inline onclick 调用全局 openExternal）
+
+
+
+                // Stats
+                async function loadStats() {
+                    try {
+                        const stats = await invoke('get_stats');
+                        updateStatsUI(stats);
+                    } catch (e) {
+                        console.error('[Preferences] 加载统计数据失败:', e);
+                    }
+                    await loadContributionGraph();
+                }
+
+                function updateStatsUI(stats) {
+                    document.getElementById('totalChars').textContent = (stats.totalChars || stats.total_chars || 0).toLocaleString();
+                    document.getElementById('totalPastes').textContent = (stats.totalPastes || stats.total_pastes || 0).toLocaleString();
+                    document.getElementById('todayChars').textContent = (stats.todayChars || stats.today_chars || 0).toLocaleString();
+                }
+
+                listen('stats_updated', (e) => {
+                    updateStatsUI(e.payload);
+                    loadContributionGraph();
+                });
+
+                // Contribution Graph
+                async function loadContributionGraph() {
+                    const grid = document.getElementById('contributionGrid');
+                    if (!grid) return;
+                    try {
+                        const history = await invoke('get_daily_history', { days: 182 });
+                        renderContributionGraph(grid, history);
+                    } catch (e) {
+                        console.error('[Preferences] 加载贡献图失败:', e);
+                    }
+                }
+
+                function renderContributionGraph(grid, history) {
+                    grid.innerHTML = '';
+
+                    const DAYS = 182; // 26 weeks
+                    const GAP = 3;
+                    const tooltip = document.getElementById('contribution-tooltip');
+
+                    // 计算起始日（今天往前 DAYS 天，并对齐到周一）
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+
+                    const startRaw = new Date(today);
+                    startRaw.setDate(today.getDate() - DAYS + 1);
+                    const dow = startRaw.getDay();
+                    const offsetToMon = dow === 0 ? -6 : 1 - dow;
+                    const startDate = new Date(startRaw);
+                    startDate.setDate(startRaw.getDate() + offsetToMon);
+
+                    // 收集所有 pastes 值，用于四分位数计算
+                    const values = Object.values(history).map(r => r.pastes || 0).filter(v => v > 0);
+                    values.sort((a, b) => a - b);
+                    function quantile(arr, q) {
+                        if (!arr.length) return 1;
+                        const idx = Math.floor(arr.length * q);
+                        return arr[Math.min(idx, arr.length - 1)];
+                    }
+                    const q1 = quantile(values, 0.25);
+                    const q2 = quantile(values, 0.5);
+                    const q3 = quantile(values, 0.75);
+
+                    function getLevel(pastes) {
+                        if (!pastes || pastes === 0) return 0;
+                        if (pastes <= q1) return 1;
+                        if (pastes <= q2) return 2;
+                        if (pastes <= q3) return 3;
+                        return 4;
+                    }
+
+                    function formatDate(d) {
+                        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    }
+
+                    const totalDays = Math.round((today - startDate) / 86400000) + 1;
+                    const totalCols = Math.ceil(totalDays / 7);
+
+                    // 动态计算格子大小，填满容器宽度
+                    const bodyEl = grid.closest('.contribution-graph-body');
+                    const labelsEl = bodyEl.querySelector('.contribution-day-labels');
+                    const availableWidth = bodyEl.offsetWidth - labelsEl.offsetWidth - 6;
+                    const cellSize = Math.max(10, Math.floor((availableWidth - (totalCols - 1) * GAP) / totalCols));
+
+                    grid.style.gridTemplateRows = `repeat(7, ${cellSize}px)`;
+                    grid.style.gap = `${GAP}px`;
+                    labelsEl.style.gridTemplateRows = `repeat(7, ${cellSize}px)`;
+                    labelsEl.style.gap = `${GAP}px`;
+
+                    for (let i = 0; i < totalDays; i++) {
+                        const d = new Date(startDate);
+                        d.setDate(startDate.getDate() + i);
+                        const dateStr = formatDate(d);
+                        const record = history[dateStr] || { chars: 0, pastes: 0 };
+                        const level = getLevel(record.pastes);
+                        const isFuture = d > today;
+
+                        const cell = document.createElement('div');
+                        cell.className = 'contribution-cell';
+                        cell.style.width = cellSize + 'px';
+                        cell.style.height = cellSize + 'px';
+                        if (!isFuture) {
+                            cell.setAttribute('data-level', level);
+                        }
+                        cell.setAttribute('data-date', dateStr);
+                        cell.setAttribute('data-pastes', record.pastes);
+                        cell.setAttribute('data-chars', record.chars);
+
+                        cell.addEventListener('mouseenter', (e) => {
+                            if (isFuture) return;
+                            const pastes = parseInt(cell.getAttribute('data-pastes')) || 0;
+                            const chars = parseInt(cell.getAttribute('data-chars')) || 0;
+                            tooltip.innerHTML = `<strong>${dateStr}</strong><br>同步 ${pastes} 次 · ${chars.toLocaleString()} 字`;
+                            tooltip.style.display = 'block';
+                            positionTooltip(e);
+                        });
+                        cell.addEventListener('mousemove', positionTooltip);
+                        cell.addEventListener('mouseleave', () => {
+                            tooltip.style.display = 'none';
+                        });
+
+                        grid.appendChild(cell);
+                    }
+                }
+
+                function positionTooltip(e) {
+                    const tooltip = document.getElementById('contribution-tooltip');
+                    const offset = 12;
+                    let x = e.clientX + offset;
+                    let y = e.clientY - tooltip.offsetHeight - offset;
+                    if (x + tooltip.offsetWidth > window.innerWidth) x = e.clientX - tooltip.offsetWidth - offset;
+                    if (y < 0) y = e.clientY + offset;
+                    tooltip.style.left = x + 'px';
+                    tooltip.style.top = y + 'px';
+                }
+
+                // Version - 动态获取
+                (async () => {
+                    try {
+                        const version = window.__APP_VERSION__ || await window.__TAURI__.core.invoke('get_app_version');
+                        document.getElementById('version').textContent = `版本 ${version}`;
+                    } catch (e) {
+                        document.getElementById('version').textContent = '版本 未知';
+                    }
+                })();
+
+                // Tab Switching from Main Process
+                listen('switch-tab', (e) => {
+                    const tabId = e.payload;
+                    console.log('[Preferences] 收到切换标签页请求:', tabId);
+                    const button = document.querySelector(`[data-tab="${tabId}"]`);
+                    if (button) {
+                        button.click();
+                    }
+                });
+
+                // 处理初始导航意图 (来自 Hash)
+                if (window.__INITIAL_TAB__) {
+                    const initialButton = document.querySelector(`[data-tab="${window.__INITIAL_TAB__}"]`);
+                    if (initialButton) {
+                        console.log('[Preferences] 应用初始导航:', window.__INITIAL_TAB__);
+                        initialButton.click();
+                    }
+                }
+
+                // ------------------------------------------------------------
+                // 核心握手：在所有监听器就绪后，主动请求初始数据
+                // ------------------------------------------------------------
+                console.log('[Preferences] 发起握手请求...');
+
+                // 请求初始配置
+                invoke('get_config').then(configData => {
+                    _lastSavedConfig = { ...configData };
+                    loadConfig(configData);
+                    window.__TAURI_HANDSHAKE_DONE__ = true;
+                    console.log('[Preferences] 握手已完成，UI 状态已锁定');
+                });
+
+                // 请求初始快捷键配置（3 个并行 invoke）
+                Promise.all([
+                    invoke('get_registered_hotkeys'),
+                    invoke('get_tap_coordinates'),
+                    invoke('get_longpress_coordinates')
+                ]).then(([hotkeys, tapCoordinates, longpressCoordinates]) => {
+                    loadHotkeysConfig({
+                        hotkeys: hotkeys || {},
+                        tapCoordinates: tapCoordinates || [],
+                        longpressCoordinates: longpressCoordinates || []
+                    });
+                });
+
+                // 请求初始统计数据
+                invoke('get_stats').then(stats => {
+                    updateStatsUI(stats);
+                }).catch(e => console.error('[Preferences] 加载统计数据失败:', e));
+
+                // 请求初始贡献图数据
+                loadContributionGraph();
+
+
+
+
+                let currentRecordingInput = null;
+                let currentModifiers = { fn: false, ctrl: false, alt: false, shift: false, meta: false };
+                let currentMainKey = null;
+
+                // 获取修饰键显示文本（macOS 风格符号）
+                function getModifiersDisplay() {
+                    const parts = [];
+                    // Tauri 环境下使用 navigator.platform 检测
+                    const isMac = navigator.platform.toLowerCase().includes('mac');
+
+                    // macOS 标准顺序: Fn → Ctrl → Option → Shift → Command
+                    if (currentModifiers.fn) parts.push('Fn');
+                    if (currentModifiers.ctrl) parts.push(isMac ? '⌃' : 'Ctrl');
+                    if (currentModifiers.alt) parts.push(isMac ? '⌥' : 'Alt');
+                    if (currentModifiers.shift) parts.push(isMac ? '⇧' : 'Shift');
+                    if (currentModifiers.meta) parts.push(isMac ? '⌘' : 'Win');
+
+                    return parts.join(' ');
+                }
+
+                // 从 e.code 获取主键名称
+                function getMainKeyFromCode(code) {
+                    if (!code) return null;
+
+                    // 忽略纯修饰键
+                    const modifierCodes = ['ControlLeft', 'ControlRight', 'AltLeft', 'AltRight',
+                        'ShiftLeft', 'ShiftRight', 'MetaLeft', 'MetaRight',
+                        'Fn', 'CapsLock'];
+                    if (modifierCodes.includes(code)) return null;
+
+                    // 单个字母键: KeyA -> A
+                    if (code.startsWith('Key')) return code.slice(3);
+
+                    // 数字键: Digit1 -> 1
+                    if (code.startsWith('Digit')) return code.slice(5);
+
+                    // 小键盘数字: Numpad1 -> Num1
+                    if (code.startsWith('Numpad')) return 'Num' + code.slice(6);
+
+                    // 功能键: F1-F24
+                    if (code.match(/^F\d+$/)) return code;
+
+                    // 特殊键映射
+                    const specialKeyMap = {
+                        'Space': '␣', 'Backspace': '⌫', 'Delete': '⌦', 'Enter': '↵', 'Tab': '⇥',
+                        'Escape': 'Esc', 'ArrowUp': '↑', 'ArrowDown': '↓', 'ArrowLeft': '←', 'ArrowRight': '→',
+                        'Home': 'Home', 'End': 'End', 'PageUp': 'PgUp', 'PageDown': 'PgDn', 'Insert': 'Ins',
+                        'Minus': '-', 'Equal': '=', 'BracketLeft': '[', 'BracketRight': ']',
+                        'Backslash': '\\', 'Semicolon': ';', 'Quote': "'", 'Comma': ',',
+                        'Period': '.', 'Slash': '/', 'Backquote': '`'
+                    };
+                    return specialKeyMap[code] || null;
+                }
+
+                // 生成 Electron accelerator 格式
+                function buildAccelerator() {
+                    const parts = [];
+
+                    // 扩展格式：Fn 放在最前面
+                    if (currentModifiers.fn) parts.push('Fn');
+                    if (currentModifiers.ctrl) parts.push('Ctrl');
+                    if (currentModifiers.alt) parts.push('Alt');
+                    if (currentModifiers.shift) parts.push('Shift');
+                    if (currentModifiers.meta) parts.push('CommandOrControl');
+
+                    if (currentMainKey) {
+                        // 反向映射显示符号到 accelerator 键名
+                        const keyMap = {
+                            '␣': 'Space', '⌫': 'Backspace', '⌦': 'Delete', '↵': 'Enter', '⇥': 'Tab',
+                            '↑': 'Up', '↓': 'Down', '←': 'Left', '→': 'Right'
+                        };
+                        parts.push(keyMap[currentMainKey] || currentMainKey);
+                    }
+
+                    return parts.join('+');
+                }
+
+                // 检查是否有至少一个修饰键（包括 Fn）
+                function hasAnyModifier() {
+                    return currentModifiers.fn || currentModifiers.ctrl || currentModifiers.alt || currentModifiers.shift || currentModifiers.meta;
+                }
+
+                // 更新输入框显示
+                function updateDisplay(input) {
+                    const modifiersText = getModifiersDisplay();
+                    const mainKeyText = currentMainKey || '';
+
+                    if (modifiersText || mainKeyText) {
+                        input.value = modifiersText + (modifiersText && mainKeyText ? ' ' : '') + mainKeyText;
+                    } else {
+                        input.value = '请按下快捷键...';
+                    }
+                }
+
+                // 重置录入状态
+                function resetRecordingState() {
+                    currentModifiers = { fn: false, ctrl: false, alt: false, shift: false, meta: false };
+                    currentMainKey = null;
+                }
+
+                // Setup hotkey input recording
+                const hotkeyInputsArray = [
+                    { name: 'send', id: 'hotkeysSend' },
+                    { name: 'insert', id: 'hotkeysInsert' },
+                    { name: 'clear', id: 'hotkeysClear' },
+                    { name: 'tap', id: 'hotkeysTap' },
+                    { name: 'longpress', id: 'hotkeysLongpress' }
+                ];
+
+                // ---- 原生录入事件监听（全局只注册一次）----
+                // recordingCompleted 标记：防止 blur 覆盖已完成的录入结果
+                let recordingCompleted = false;
+
+                // 监听原生录入完成（修饰键+主键 或 纯修饰键释放后）
+                listen('hotkey-recorded', (e) => {
+                    if (!currentRecordingInput) return;
+                    const { accelerator, display } = e.payload;
+                    console.log('[Preferences] 原生录入完成:', accelerator, display);
+
+                    // 标记已完成，防止 blur 覆盖
+                    recordingCompleted = true;
+                    const recordingName = currentRecordingInput.name;
+
+                    // 更新显示（统一转为图形符号）
+                    currentRecordingInput.input.value = normalizeDisplay(display);
+                    currentRecordingInput.input.classList.remove('recording');
+
+                    // 先保存再清理（blur 会在 saveHotkeyConfig 之后检查 recordingCompleted）
+                    invoke('stop_hotkey_recording');
+                    saveHotkeyConfig(recordingName, accelerator);
+                    resetRecordingState();
+                    currentRecordingInput = null;
+
+                    // 移除焦点（延迟一帧，确保状态已更新）
+                    const inputEl = document.getElementById(hotkeyInputsArray.find(h => h.name === recordingName)?.id);
+                    if (inputEl) {
+                        setTimeout(() => inputEl.blur(), 0);
+                    }
+                });
+
+                // 监听原生实时修饰键变化（用户按下/释放修饰键时实时更新显示）
+                listen('hotkey-recording-modifiers', (e) => {
+                    if (!currentRecordingInput) return;
+                    const { display } = e.payload;
+                    currentRecordingInput.input.value = display ? normalizeDisplay(display) : '请按下快捷键...';
+                });
+
+                hotkeyInputsArray.forEach(({ name, id }) => {
+                    const input = document.getElementById(id);
+                    if (!input) {
+                        console.warn(`[Preferences] 未找到快捷键输入框: ${id}`);
+                        return;
+                    }
+
+                    input.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        input.focus();
+                    });
+
+                    input.addEventListener('focus', () => {
+                        currentRecordingInput = { name, input };
+                        recordingCompleted = false;
+                        input.classList.add('recording');
+                        resetRecordingState();
+                        input.value = '请按下快捷键...';
+                        input.setSelectionRange(0, 0);
+
+                        // 启动原生按键录入（macOS 支持 Fn 键）
+                        invoke('start_hotkey_recording');
+                    });
+
+                    input.addEventListener('blur', () => {
+                        // 如果录入已通过原生事件完成，不需要再处理
+                        if (recordingCompleted) {
+                            recordingCompleted = false;
+                            return;
+                        }
+
+                        if (currentRecordingInput && currentRecordingInput.input === input) {
+                            input.classList.remove('recording');
+                            invoke('stop_hotkey_recording');
+
+                            // 恢复之前保存的值
+                            const savedValue = currentConfig.hotkeys?.[name];
+                            input.value = savedValue ? acceleratorToDisplay(savedValue) : '';
+
+                            resetRecordingState();
+                            currentRecordingInput = null;
+                        }
+                    });
+
+                    // Escape 清除快捷键（原生监听器会放行 Escape 给 JS）
+                    // 非 macOS 平台：保留完整 JS 录入逻辑作为 fallback
+                    input.addEventListener('keydown', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        if (e.code === 'Escape') {
+                            recordingCompleted = true; // 防止 blur 覆盖
+                            input.value = '';
+                            input.classList.remove('recording');
+                            resetRecordingState();
+                            invoke('stop_hotkey_recording');
+                            saveHotkeyConfig(name, '');
+                            currentRecordingInput = null;
+                            input.blur();
+                            return;
+                        }
+
+                        // 非 macOS 平台 fallback：使用 JS keydown 录入
+                        const isMac = navigator.platform.toLowerCase().includes('mac');
+                        if (!isMac) {
+                            currentModifiers.ctrl = e.ctrlKey;
+                            currentModifiers.alt = e.altKey;
+                            currentModifiers.shift = e.shiftKey;
+                            currentModifiers.meta = e.metaKey;
+
+                            const mainKey = getMainKeyFromCode(e.code);
+                            if (mainKey) {
+                                currentMainKey = mainKey;
+                                if (hasAnyModifier()) {
+                                    recordingCompleted = true;
+                                    updateDisplay(input);
+                                    input.classList.remove('recording');
+                                    const accelerator = buildAccelerator();
+                                    saveHotkeyConfig(name, accelerator);
+                                    currentRecordingInput = null;
+                                    input.blur();
+                                    return;
+                                }
+                            }
+                            updateDisplay(input);
+                        }
+                    });
+
+                    // 非 macOS keyup fallback
+                    input.addEventListener('keyup', (e) => {
+                        const isMac = navigator.platform.toLowerCase().includes('mac');
+                        if (isMac) return;
+                        if (!currentRecordingInput || currentRecordingInput.input !== input) return;
+
+                        currentModifiers.ctrl = e.ctrlKey;
+                        currentModifiers.alt = e.altKey;
+                        currentModifiers.shift = e.shiftKey;
+                        currentModifiers.meta = e.metaKey;
+                        updateDisplay(input);
+                    });
+                });
+
+                // 按键名 → 图形符号映射表
+                const KEY_SYMBOLS = {
+                    'Return': '↩', 'Enter': '↩',
+                    'Delete': '⌫', 'Backspace': '⌫',
+                    'ForwardDelete': '⌦',
+                    'Tab': '⇥',
+                    'Escape': '⎋', 'Esc': '⎋',
+                    'Up': '↑', 'Down': '↓', 'Left': '←', 'Right': '→',
+                    'Home': '↖', 'End': '↘',
+                    'PageUp': '⇞', 'PageDown': '⇟',
+                    'CapsLock': '⇪',
+                    'Space': '␣',
+                };
+
+                // 将单个 token 转换为显示符号（修饰键 + 普通键）
+                function tokenToSymbol(token) {
+                    const isMac = navigator.platform.toLowerCase().includes('mac');
+                    const modMap = {
+                        'CommandOrControl': isMac ? '⌘' : 'Ctrl',
+                        'Command': '⌘', 'Cmd': '⌘',
+                        'Ctrl': isMac ? '⌃' : 'Ctrl', 'Control': isMac ? '⌃' : 'Ctrl',
+                        'Alt': isMac ? '⌥' : 'Alt', 'Option': '⌥',
+                        'Shift': isMac ? '⇧' : 'Shift',
+                        'Fn': 'Fn',
+                    };
+                    return modMap[token] ?? KEY_SYMBOLS[token] ?? token;
+                }
+
+                // Convert accelerator string (e.g. "Fn+Return") to display string (e.g. "Fn ↩")
+                function acceleratorToDisplay(accelerator) {
+                    if (!accelerator) return '';
+                    return accelerator.split('+').map(tokenToSymbol).join(' ');
+                }
+
+                // 对原生 display 字符串也做符号统一（将英文按键名替换为图形符号）
+                function normalizeDisplay(display) {
+                    if (!display) return '';
+                    return Object.entries(KEY_SYMBOLS).reduce(
+                        (str, [name, sym]) => str.replace(new RegExp(`\\b${name}\\b`, 'g'), sym),
+                        display
+                    );
+                }
+
+                // Save single hotkey
+                function saveHotkeyConfig(name, accelerator) {
+                    if (!currentConfig.hotkeys) currentConfig.hotkeys = {};
+                    currentConfig.hotkeys[name] = accelerator;
+                    invoke('register_hotkey', { action: name, accelerator }).catch(e => {
+                        console.error('[Preferences] 快捷键注册失败:', e);
+                    });
+                }
+
+                // Setup clear buttons
+                document.querySelectorAll('.hotkey-clear-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const inputId = btn.dataset.for;
+                        const input = document.getElementById(inputId);
+                        if (input) {
+                            input.value = '';
+                            // Map input ID to config name (hotkeysSend -> send)
+                            const name = inputId.replace('hotkeys', '').toLowerCase();
+                            saveHotkeyConfig(name, '');
+                        }
+                    });
+                });
+
+                // --- 动态坐标配置逻辑 ---
+                let tapScreenConfigs = [];
+                let longpressScreenConfigs = [];
+
+                function getDeviceNameByClientId(clientId) {
+                    if (!clientId || !currentConfig.trustedDevices) return null;
+                    const device = currentConfig.trustedDevices.find(d => d.id === clientId);
+                    return device ? device.name : null;
+                }
+
+                function renderScreenConfigList(configs, containerId, tipId, saveFunc) {
+                    const container = document.getElementById(containerId);
+                    const tip = document.getElementById(tipId);
+                    container.innerHTML = '';
+
+                    if (configs.length === 0) {
+                        tip.style.display = 'block';
+                        return;
+                    }
+                    tip.style.display = 'none';
+
+                    configs.forEach((config, index) => {
+                        const row = document.createElement('div');
+                        const isIos = config.platform === 'ios';
+                        row.innerHTML = `
+                        <div class="setting-item" style="padding: 12px 16px; align-items: center;">
+                            <div style="flex: 1; overflow: hidden; margin-right: 12px;">
+                                <div style="font-size: 13px; color: var(--text-primary); white-space: nowrap;">
+                                    屏幕尺寸 ${config.width} × ${config.height}
+                                    ${config.clientId ? `<span style="color: var(--text-secondary);">· ${getDeviceNameByClientId(config.clientId) || ''}</span>` : ''}
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                ${isIos ? '' : '<span style="font-size: 12px; color: var(--text-secondary);">点击坐标</span>'}
+                                ${isIos ? '' : `
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <div style="display: flex; gap: 4px; align-items: center;">
+                                        <span style="color: var(--text-secondary); font-size: 12px;">X</span>
+                                        <input type="number" class="screen-x-input" value="${config.x || ''}" style="width: 55px; text-align: center;" placeholder="X">
+                                    </div>
+                                    <div style="display: flex; gap: 4px; align-items: center;">
+                                        <span style="color: var(--text-secondary); font-size: 12px;">Y</span>
+                                        <input type="number" class="screen-y-input" value="${config.y || ''}" style="width: 55px; text-align: center;" placeholder="Y">
+                                    </div>
+                                </div>`}
+                                ${isIos ? '<span style="font-size: 11px; color: var(--text-secondary);">iOS 设备不支持模拟点击</span>' : ''}
+                                ${isIos ? '' : '<button class="hotkey-clear-btn delete-config-btn" title="删除该配置">✕</button>'}
+                            </div>
+                        </div>
+                    `;
+
+                        row.querySelector('.screen-x-input')?.addEventListener('change', (e) => {
+                            configs[index].x = parseInt(e.target.value) || 0;
+                            saveFunc();
+                        });
+                        row.querySelector('.screen-y-input')?.addEventListener('change', (e) => {
+                            configs[index].y = parseInt(e.target.value) || 0;
+                            saveFunc();
+                        });
+                        row.querySelector('.delete-config-btn')?.addEventListener('click', () => {
+                            if (confirm(`确定要删除尺寸 "${config.width}x${config.height}" 的配置吗？`)) {
+                                configs.splice(index, 1);
+                                renderScreenConfigList(configs, containerId, tipId, saveFunc);
+                                saveFunc();
+                            }
+                        });
+
+                        container.appendChild(row);
+                    });
+                }
+
+                function renderTapScreenConfigs() {
+                    renderScreenConfigList(tapScreenConfigs, 'tapScreenConfigsContainer', 'noTapScreenConfigTip', saveTapCoordinatesConfig);
+                }
+
+                function renderLongpressScreenConfigs() {
+                    renderScreenConfigList(longpressScreenConfigs, 'longpressScreenConfigsContainer', 'noLongpressScreenConfigTip', saveLongpressCoordinatesConfig);
+                }
+
+                function saveTapCoordinatesConfig() {
+                    invoke('save_tap_coordinates', { coordinates: tapScreenConfigs });
+                }
+
+                function saveLongpressCoordinatesConfig() {
+                    invoke('save_longpress_coordinates', { coordinates: longpressScreenConfigs });
+                }
+
+                // 加载快捷键配置 - 提取为命名函数，供握手时直接调用
+                function loadHotkeysConfig(config) {
+                    console.log('[Preferences] 加载 hotkeys 配置:', config);
+                    if (config && config.hotkeys) {
+                        Object.entries(config.hotkeys).forEach(([name, accelerator]) => {
+                            const inputId = 'hotkeys' + name.charAt(0).toUpperCase() + name.slice(1);
+                            const input = document.getElementById(inputId);
+                            if (input) {
+                                input.value = acceleratorToDisplay(accelerator);
+                            }
+                        });
+                    }
+
+                    // 处理点击坐标列表
+                    if (config && config.tapCoordinates) {
+                        if (Array.isArray(config.tapCoordinates)) {
+                            tapScreenConfigs = config.tapCoordinates;
+                        } else if (typeof config.tapCoordinates === 'object') {
+                            tapScreenConfigs = [];
+                            if (config.tapCoordinates.folded) {
+                                tapScreenConfigs.push({ ...config.tapCoordinates.folded, name: '折叠模式' });
+                            }
+                            if (config.tapCoordinates.unfolded) {
+                                tapScreenConfigs.push({ ...config.tapCoordinates.unfolded, name: '展开模式' });
+                            }
+                        }
+                        renderTapScreenConfigs();
+                    }
+
+                    // 处理长按坐标列表
+                    if (config && config.longpressCoordinates) {
+                        if (Array.isArray(config.longpressCoordinates)) {
+                            longpressScreenConfigs = config.longpressCoordinates;
+                        } else if (typeof config.longpressCoordinates === 'object') {
+                            longpressScreenConfigs = [];
+                            if (config.longpressCoordinates.folded) {
+                                longpressScreenConfigs.push({ ...config.longpressCoordinates.folded, name: '折叠模式' });
+                            }
+                            if (config.longpressCoordinates.unfolded) {
+                                longpressScreenConfigs.push({ ...config.longpressCoordinates.unfolded, name: '展开模式' });
+                            }
+                        }
+                        renderLongpressScreenConfigs();
+                    }
+                }
+
+                // 监听设备屏幕参数上报，自动捕获新尺寸
+                listen('device_screen_info', (e) => {
+                    const { clientId, width, height, platform } = e.payload;
+                    if (!width || !height) return;
+
+                    // 自动判断默认名称
+                    let defaultName = `尺寸 ${width}x${height}`;
+                    const ratio = width / height;
+                    if (ratio < 0.6) defaultName = "手机(折叠)";
+                    else if (ratio > 0.8 && ratio < 1.2) defaultName = "手机(展开)";
+                    else if (ratio > 1.5) defaultName = "手机(横屏)";
+
+                    const defaultEntry = {
+                        name: defaultName,
+                        width: width,
+                        height: height,
+                        x: Math.round(width / 2),
+                        y: Math.round(height * 0.9),
+                        clientId: clientId,
+                        platform: platform || ''
+                    };
+
+                    // 点击坐标：检查是否已存在该尺寸
+                    const tapExists = tapScreenConfigs.find(c => c.width === width && c.height === height);
+                    if (!tapExists) {
+                        console.log(`📱 [点击] 捕获到新屏幕尺寸: ${width}x${height}`);
+                        tapScreenConfigs.push({ ...defaultEntry });
+                        renderTapScreenConfigs();
+                        saveTapCoordinatesConfig();
+                    } else {
+                        // 每次设备上报时，强制刷新 clientId 和 platform（确保 iOS 置灰逻辑正确）
+                        let changed = false;
+                        if (clientId && tapExists.clientId !== clientId) { tapExists.clientId = clientId; changed = true; }
+                        if (platform && tapExists.platform !== platform) { tapExists.platform = platform; changed = true; }
+                        if (changed) { renderTapScreenConfigs(); saveTapCoordinatesConfig(); }
+                    }
+
+                    // 长按坐标：检查是否已存在该尺寸
+                    const longpressExists = longpressScreenConfigs.find(c => c.width === width && c.height === height);
+                    if (!longpressExists) {
+                        console.log(`📱 [长按] 捕获到新屏幕尺寸: ${width}x${height}`);
+                        longpressScreenConfigs.push({ ...defaultEntry });
+                        renderLongpressScreenConfigs();
+                        saveLongpressCoordinatesConfig();
+                    } else {
+                        let changed = false;
+                        if (clientId && longpressExists.clientId !== clientId) { longpressExists.clientId = clientId; changed = true; }
+                        if (platform && longpressExists.platform !== platform) { longpressExists.platform = platform; changed = true; }
+                        if (changed) { renderLongpressScreenConfigs(); saveLongpressCoordinatesConfig(); }
+                    }
+                });
+
+                // ------------------------------------------------------------
+                // 全局事件监听器（从 bridge 底部搬入）
+                // ------------------------------------------------------------
+
+                // 设备上线时刷新配置（更新信任列表和在线状态到 UI）
+                listen('relay:client_online', async (e) => {
+                    console.log('[Preferences] 设备上线:', e.payload);
+                    try {
+                        const updatedConfig = await invoke('get_config');
+                        loadConfig(updatedConfig);
+                    } catch (err) {
+                        console.error('[Preferences] 刷新配置失败:', err);
+                    }
+                });
+
+                // 设备离线事件
+                listen('relay:client_offline', (e) => {
+                    console.log('[Preferences] 设备离线:', e.payload);
+                });
+
+                // 配对码冲突，自动重新生成（forceRandom: true）
+                listen('relay:code_conflict', async (e) => {
+                    console.warn('[Preferences] 配对码冲突:', e.payload, '，正在自动重新生成...');
+                    requestPairingCode(true);
+                });
+
+                // 远端解除配对，移除本地信任设备并刷新
+                listen('relay:device_unpaired', async (e) => {
+                    console.log('[Preferences] 收到远端解除配对通知:', e.payload);
+                    try {
+                        await invoke('remove_trusted_device', { deviceId: e.payload });
+                        const updatedConfig = await invoke('get_config');
+                        loadConfig(updatedConfig);
+                    } catch (err) {
+                        console.error('[Preferences] 处理解除配对通知失败:', err);
+                    }
+                });
+
+            } // 结束 initializePreferences 函数
+        </script>
+</body>
+
+</html>

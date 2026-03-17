@@ -1,0 +1,17 @@
+# 构建产物
+build/
+*.apk
+*.aab
+
+# Keystore（绝对不能提交到版本控制）
+*.jks
+*.keystore
+keystore.properties
+
+# Android 本地配置
+local.properties
+.gradle/
+
+# IDE
+.idea/
+*.iml

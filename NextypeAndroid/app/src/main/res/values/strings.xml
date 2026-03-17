@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">落笔 Nextype</string>
+    <string name="accessibility_service_label">落笔远程控制</string>
+    <string name="accessibility_service_description">允许电脑端通过快捷键远程控制手机屏幕点击，用于切换输入法等操作。</string>
+    <string name="privacy_policy_content">落笔 Nextype 隐私政策\n\n最后更新：2026年3月\n\n一、信息收集说明\n\n1. 设备标识符\n我们使用 Android 系统的 ANDROID_ID 生成稳定的设备标识符，用于与您配对的电脑端建立连接。该标识符在本地生成，不会上传至我们的服务器。\n\n2. 配对设备信息\n配对时生成的设备 ID、设备名称和加密密钥均存储在您手机本地，采用加密存储方式保护。\n\n3. 中继服务器通信\n为实现手机与电脑的跨网络连接，您的设备 ID、设备名称等信息会通过我们的中继服务器进行路由。传输内容采用端对端加密，服务器无法解密。\n\n二、信息安全\n\n我们采用行业标准的加密措施保护您的数据。配对加密密钥使用 AES-256 加密存储在您的设备本地，未经授权的第三方无法访问。\n\n三、您的权利\n\n您可以随时在应用内解除设备配对、清除配对数据，或卸载应用以删除所有本地数据。\n\n四、联系我们\n\n如有隐私相关问题，请访问 yuanfengai.cn 与我们联系。\n\n本隐私政策自 2026年3月1日起生效。</string>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 设备图标的圆形背景 - Material Design 3 风格 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <!-- 浅蓝色背景，与主题色呼应 -->
+    <solid android:color="#E8F0FE" />
+</shape>

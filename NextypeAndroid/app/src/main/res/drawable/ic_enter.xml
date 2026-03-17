@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 回车图标 - 线性风格，带圆角，视觉重心已调整 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp"
+    android:height="20dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- 回车符号：向左箭头 + 向上弯曲的线条，整体下移1.5单位以平衡视觉重心 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#000000"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M3,13.5L9,7.5M3,13.5L9,19.5M3,13.5H17C19.21,13.5 21,11.71 21,9.5V6.5"/>
+</vector>
