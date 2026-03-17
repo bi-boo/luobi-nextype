@@ -1,14 +1,46 @@
-# 落笔 Nextype
+<p align="center">
+  <img src="website/assets/logo.png" alt="落笔 Nextype" width="80">
+</p>
 
-跨平台加密文本传输工具 -- 手机打字，电脑上屏。
+<h1 align="center">落笔 Nextype</h1>
 
-## 特性
+<p align="center">
+  <strong>手机输入，电脑输出</strong><br>
+  不做语音输入法，只做内容搬运工
+</p>
 
-- **端到端加密**：所有传输数据经 AES-256-CBC 加密，中继服务器无法解密
-- **无需注册**：扫码配对即用，不收集任何个人信息
-- **多平台支持**：macOS / Windows / Android / iOS
-- **低延迟**：文字在设备间近实时同步
-- **开源透明**：全部源代码公开，可自建中继服务器
+<p align="center">
+  <a href="https://github.com/bi-boo/luobi-nextype/releases">下载</a> · <a href="https://yuanfengai.cn">官网</a> · <a href="./CONTRIBUTING.md">参与贡献</a>
+</p>
+
+---
+
+## 解决什么问题？
+
+电脑上的语音输入法有个尴尬的问题：**你得对着屏幕说话**。
+
+在开放工位、会议室、咖啡馆，旁边坐着人，对着电脑说话既社死又录进去一堆杂音。手机语音输入法（豆包、讯飞、iOS 原生）用了很久，识别准确率已经很高了——但这些输入法**没有电脑版**。
+
+**落笔解决的就是这个断层**：手机上说，电脑上出。你已经用顺手的语音输入法一个字都不用换，识别效果零损耗。
+
+## 适合谁用？
+
+> **"开放工位旁边坐着人，根本没办法对着屏幕说话。后来试了落笔，手机放到嘴边轻声说完，内容直接出现在光标那里，旁边同事完全不知道我在干嘛。"**
+> — 王磊，互联网从业者
+
+> **"豆包输入法用了很久，专业词、人名都摸透了，基本不用纠正。但豆包没有电脑版。落笔把这个问题绕过去了——手机上说，内容直接到电脑，识别效果一点没损耗。"**
+> — 林静，产品经理
+
+> **"家里一台电脑，公司一台电脑，不可能每个地方都买麦克风。手机随时在身上，落笔直接把手机变成麦克风，配上 Cursor 简直是 Vibe Coding 标配。"**
+> — Ryan M.，独立开发者
+
+## 核心特性
+
+- **端到端加密** — AES-256-CBC 加密传输，中继服务器无法解密你的内容
+- **无需注册** — 输入配对码即用，不收集任何个人信息
+- **多平台** — macOS / Windows / Android / iOS
+- **低延迟** — 文字在设备间近实时同步
+- **开源透明** — 全部源代码公开，可自建中继服务器
 
 ## 下载
 
@@ -16,15 +48,16 @@
 |------|------|------|
 | macOS | 稳定 | [GitHub Releases](https://github.com/bi-boo/luobi-nextype/releases) |
 | Android | 稳定 | [GitHub Releases](https://github.com/bi-boo/luobi-nextype/releases) |
-| iOS | 基本可用 | App Store（即将上架） |
-| Windows | 开发中 | 即将发布 |
+| Windows | 可用，未充分测试 | [GitHub Releases](https://github.com/bi-boo/luobi-nextype/releases) |
+| iOS | 源码可用 | 可自行克隆项目用 Xcode 构建安装，App Store 版本筹备中 |
 
 ## 快速开始
 
-1. 在电脑和手机上分别安装落笔 Nextype
-2. 电脑端点击「连接手机」，显示配对二维码
-3. 手机端扫码完成配对
-4. 在手机上打字或语音输入，文字实时出现在电脑上
+**1. 安装** — 在电脑和手机上分别安装落笔 Nextype
+
+**2. 配对** — 电脑端点击「连接手机」显示配对码，手机端输入配对码完成连接
+
+**3. 使用** — 在手机上打字或语音输入，点击发送，文字实时出现在电脑光标处
 
 ## 项目结构
 
@@ -69,7 +102,7 @@ Copyright (c) 2024-2026 Zheng Bao
 **Nextype** is a cross-platform encrypted text transfer tool. Type on your phone, and the text appears on your computer in real time.
 
 - End-to-end AES-256-CBC encryption
-- No registration required — pair via QR code
+- No registration required — pair with a code
 - Supports macOS, Windows, Android, and iOS
 - Open source under AGPL-3.0 — self-host your own relay server
 
