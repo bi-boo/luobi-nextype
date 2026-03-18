@@ -275,6 +275,21 @@ wss.on('connection', (ws) => {
                             serverId: deviceId,
                             serverName: message.deviceName
                         });
+
+                        // Mac 重连后，告知其哪些配对手机已在线
+                        const baseServerId = deviceId.split('_')[0];
+                        const pairedDevices = getTrustedDevices(baseServerId);
+                        for (const paired of pairedDevices) {
+                            const clientSession = connectedDevices.get(paired.id);
+                            if (clientSession && clientSession.role === 'client' && clientSession.ws.readyState === WebSocket.OPEN) {
+                                ws.send(JSON.stringify({
+                                    type: 'client_online',
+                                    clientId: paired.id,
+                                    deviceName: clientSession.deviceName
+                                }));
+                                console.log(`📤 通知 Mac 已在线的手机: ${paired.id} (${clientSession.deviceName})`);
+                            }
+                        }
                     }
                     break;
 

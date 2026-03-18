@@ -727,12 +727,41 @@ impl NativeFnHotkey {
             // 权限已就绪，创建 CGEventTap
             let monitor_state = RwLock::new(GlobalMonitorInternalState::default());
 
+            // 用于在回调中重新启用被系统禁用的 tap（锁屏唤醒等场景）
+            let tap_port_ptr: Arc<std::sync::atomic::AtomicPtr<std::ffi::c_void>> =
+                Arc::new(std::sync::atomic::AtomicPtr::new(std::ptr::null_mut()));
+            let tap_port_for_callback = tap_port_ptr.clone();
+
             let tap = CGEventTap::new(
                 CGEventTapLocation::Session,
                 CGEventTapPlacement::HeadInsertEventTap,
                 CGEventTapOptions::Default, // Default 模式，可以消费事件
                 vec![CGEventType::KeyDown, CGEventType::KeyUp, CGEventType::FlagsChanged],
                 move |_proxy, _event_type, event| {
+                    // 检测 CGEventTap 被系统禁用（锁屏/睡眠唤醒时 macOS 可能触发）
+                    let event_type_u32 = _event_type as u32;
+                    if event_type_u32 == 0xFFFFFFFE || event_type_u32 == 0xFFFFFFFF {
+                        tracing::warn!(
+                            "⚠️ CGEventTap 被系统禁用 (0x{:X})，正在重新启用...",
+                            event_type_u32
+                        );
+                        let port = tap_port_for_callback
+                            .load(std::sync::atomic::Ordering::SeqCst);
+                        if !port.is_null() {
+                            extern "C" {
+                                fn CGEventTapEnable(
+                                    tap: *mut std::ffi::c_void,
+                                    enable: bool,
+                                );
+                            }
+                            unsafe {
+                                CGEventTapEnable(port, true);
+                            }
+                            tracing::info!("✅ CGEventTap 已重新启用");
+                        }
+                        return None;
+                    }
+
                     let flags = event.get_flags();
                     let raw_flags = flags.bits();
                     let current_mods = ModifierState {
@@ -1065,6 +1094,13 @@ impl NativeFnHotkey {
 
             match tap {
                 Ok(tap) => {
+                    // 存储 CFMachPort 原始指针，供回调中重新启用 tap 使用
+                    use core_foundation::base::TCFType;
+                    tap_port_ptr.store(
+                        tap.mach_port.as_concrete_TypeRef() as *mut std::ffi::c_void,
+                        std::sync::atomic::Ordering::SeqCst,
+                    );
+
                     unsafe {
                         let loop_source =
                             match tap.mach_port.create_runloop_source(0) {
