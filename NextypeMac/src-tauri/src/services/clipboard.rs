@@ -11,6 +11,8 @@ use tauri_plugin_clipboard_manager::ClipboardExt;
 /// 不能只依赖 AXIsProcessTrusted()：覆盖安装后旧的 TCC 条目仍存在，
 /// AXIsProcessTrusted() 返回 true，但二进制签名已变，实际操作会失败。
 /// 因此用 CGEventTap 创建做真实验证——系统在此处校验代码签名。
+///
+/// 检测到旧条目失效时，自动清除并重新添加当前 app，用户只需开启开关。
 pub fn has_accessibility_permission() -> bool {
     extern "C" {
         fn AXIsProcessTrusted() -> bool;
@@ -35,27 +37,78 @@ pub fn has_accessibility_permission() -> bool {
         |_proxy, _type, event| Some(event.clone()),
     );
 
-    tap.is_ok()
+    if tap.is_ok() {
+        return true;
+    }
+
+    // 权限失效（旧条目签名不匹配）→ 自动清除旧条目并添加新条目
+    tracing::warn!("辅助功能权限条目已失效（覆盖安装），正在自动修复...");
+    repair_stale_accessibility_entry();
+    false
+}
+
+/// 清除旧的辅助功能权限条目，并重新添加当前 app
+///
+/// 1. tccutil reset 清除旧条目（签名不匹配的残留）
+/// 2. AXIsProcessTrustedWithOptions(prompt) 从当前进程调用，
+///    让系统把当前 app 加入列表（默认关闭），用户只需开启开关
+fn repair_stale_accessibility_entry() {
+    // 清除旧条目
+    let reset = Command::new("tccutil")
+        .args(["reset", "Accessibility", "com.nextype.app"])
+        .output();
+
+    match &reset {
+        Ok(output) if output.status.success() => {
+            tracing::info!("已清除旧的辅助功能权限条目");
+        }
+        Ok(output) => {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            tracing::warn!("tccutil reset 返回非零: {}", stderr.trim());
+        }
+        Err(e) => {
+            tracing::warn!("tccutil reset 执行失败: {}", e);
+        }
+    }
+
+    // 从当前进程调用，让系统把当前 app 加入辅助功能列表
+    prompt_accessibility_permission();
+    tracing::info!("已请求系统添加当前 app 到辅助功能权限列表");
+}
+
+/// 通过 AXIsProcessTrustedWithOptions(prompt: true) 触发系统添加当前进程到辅助功能列表
+/// 必须从 app 进程内直接调用（FFI），不能通过 osascript——否则添加的是 osascript 进程
+fn prompt_accessibility_permission() {
+    use core_foundation::base::TCFType;
+    use core_foundation::boolean::CFBoolean;
+    use core_foundation::dictionary::CFDictionary;
+    use core_foundation::string::CFString;
+
+    extern "C" {
+        fn AXIsProcessTrustedWithOptions(options: core_foundation::base::CFTypeRef) -> bool;
+    }
+
+    let key = CFString::new("AXTrustedCheckOptionPrompt");
+    let value = CFBoolean::true_value();
+    let opts = CFDictionary::from_CFType_pairs(&[(key.as_CFType(), value.as_CFType())]);
+
+    unsafe {
+        AXIsProcessTrustedWithOptions(opts.as_concrete_TypeRef() as _);
+    }
 }
 
 /// 请求 Accessibility 权限（触发系统提示）
 pub fn request_accessibility_permission() -> bool {
-    // 尝试触发系统权限弹窗
-    let result = Command::new("osascript")
-        .arg("-e")
-        .arg(
-            r#"
-            tell application "System Events"
-                keystroke ""
-            end tell
-        "#,
-        )
-        .output();
-
-    match result {
-        Ok(output) => output.status.success(),
-        Err(_) => false,
+    extern "C" {
+        fn AXIsProcessTrusted() -> bool;
     }
+
+    if unsafe { AXIsProcessTrusted() } {
+        return true;
+    }
+
+    prompt_accessibility_permission();
+    false
 }
 
 /// 打开系统辅助功能设置
