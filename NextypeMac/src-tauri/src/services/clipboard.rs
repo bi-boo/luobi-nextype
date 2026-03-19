@@ -7,22 +7,35 @@ use tauri::{AppHandle, Emitter};
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 /// 检查是否有 Accessibility 权限
+///
+/// 不能只依赖 AXIsProcessTrusted()：覆盖安装后旧的 TCC 条目仍存在，
+/// AXIsProcessTrusted() 返回 true，但二进制签名已变，实际操作会失败。
+/// 因此用 CGEventTap 创建做真实验证——系统在此处校验代码签名。
 pub fn has_accessibility_permission() -> bool {
-    // 使用 JXA 直接调用 AXIsProcessTrusted()，无副作用且准确
-    let result = Command::new("osascript")
-        .arg("-l")
-        .arg("JavaScript")
-        .arg("-e")
-        .arg("ObjC.import('ApplicationServices'); $.AXIsProcessTrusted()")
-        .output();
-
-    match result {
-        Ok(output) => {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            output.status.success() && stdout.trim() == "true"
-        }
-        Err(_) => false,
+    extern "C" {
+        fn AXIsProcessTrusted() -> bool;
     }
+
+    // 快速检查：TCC 数据库无条目则直接返回 false
+    if !unsafe { AXIsProcessTrusted() } {
+        return false;
+    }
+
+    // 真实验证：尝试创建一个只读 CGEventTap（无副作用，立即释放）
+    // 覆盖安装后旧条目的二进制签名不匹配，此处会返回 NULL
+    use core_graphics::event::{
+        CGEventTap, CGEventTapLocation, CGEventTapOptions, CGEventTapPlacement, CGEventType,
+    };
+
+    let tap = CGEventTap::new(
+        CGEventTapLocation::Session,
+        CGEventTapPlacement::HeadInsertEventTap,
+        CGEventTapOptions::ListenOnly,
+        vec![CGEventType::KeyDown],
+        |_proxy, _type, event| Some(event.clone()),
+    );
+
+    tap.is_ok()
 }
 
 /// 请求 Accessibility 权限（触发系统提示）
