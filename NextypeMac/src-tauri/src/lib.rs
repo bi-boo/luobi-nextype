@@ -292,6 +292,42 @@ pub fn run() {
                 });
             }
 
+            // 检测覆盖安装：可执行文件指纹变化时清除旧的辅助功能权限条目
+            #[cfg(target_os = "macos")]
+            {
+                use tauri_plugin_store::StoreExt;
+                if let Ok(exe_path) = std::env::current_exe() {
+                    let current_fingerprint = std::fs::metadata(&exe_path)
+                        .and_then(|m| m.modified())
+                        .map(|t| format!("{:?}", t))
+                        .unwrap_or_default();
+
+                    let mut need_reset = false;
+                    if let Ok(store) = app.store("config.json") {
+                        if let Some(stored) = store.get("exe_fingerprint") {
+                            if stored.as_str() != Some(&current_fingerprint) {
+                                need_reset = true;
+                                tracing::info!("检测到可执行文件变更（覆盖安装/更新），将清除旧的辅助功能权限条目");
+                            }
+                        }
+                        // 无论是否 reset，都更新指纹
+                        store.set("exe_fingerprint", serde_json::Value::String(current_fingerprint));
+                        let _ = store.save();
+                    }
+
+                    if need_reset {
+                        // 清除旧条目
+                        let _ = std::process::Command::new("tccutil")
+                            .args(["reset", "Accessibility", "com.nextype.app"])
+                            .output();
+                        tracing::info!("已通过 tccutil 清除旧的辅助功能权限条目");
+
+                        // 让系统把当前 app 加入列表（默认关闭），用户只需开启开关
+                        services::clipboard::request_accessibility_permission();
+                    }
+                }
+            }
+
             // 启动引导：无配对设备 或 有设备但无辅助功能权限 → 打开配对手机页
             {
                 let state_ref = app.state::<state::SharedAppState>();

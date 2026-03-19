@@ -37,43 +37,7 @@ pub fn has_accessibility_permission() -> bool {
         |_proxy, _type, event| Some(event.clone()),
     );
 
-    if tap.is_ok() {
-        return true;
-    }
-
-    // 权限失效（旧条目签名不匹配）→ 自动清除旧条目并添加新条目
-    tracing::warn!("辅助功能权限条目已失效（覆盖安装），正在自动修复...");
-    repair_stale_accessibility_entry();
-    false
-}
-
-/// 清除旧的辅助功能权限条目，并重新添加当前 app
-///
-/// 1. tccutil reset 清除旧条目（签名不匹配的残留）
-/// 2. AXIsProcessTrustedWithOptions(prompt) 从当前进程调用，
-///    让系统把当前 app 加入列表（默认关闭），用户只需开启开关
-fn repair_stale_accessibility_entry() {
-    // 清除旧条目
-    let reset = Command::new("tccutil")
-        .args(["reset", "Accessibility", "com.nextype.app"])
-        .output();
-
-    match &reset {
-        Ok(output) if output.status.success() => {
-            tracing::info!("已清除旧的辅助功能权限条目");
-        }
-        Ok(output) => {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            tracing::warn!("tccutil reset 返回非零: {}", stderr.trim());
-        }
-        Err(e) => {
-            tracing::warn!("tccutil reset 执行失败: {}", e);
-        }
-    }
-
-    // 从当前进程调用，让系统把当前 app 加入辅助功能列表
-    prompt_accessibility_permission();
-    tracing::info!("已请求系统添加当前 app 到辅助功能权限列表");
+    tap.is_ok()
 }
 
 /// 通过 AXIsProcessTrustedWithOptions(prompt: true) 触发系统添加当前进程到辅助功能列表
