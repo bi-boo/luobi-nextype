@@ -188,11 +188,6 @@ impl HotkeyManager {
         Ok(())
     }
 
-    /// 获取已注册的快捷键列表
-    pub fn get_registered(&self) -> HashMap<String, Vec<String>> {
-        self.registered.read().clone()
-    }
-
     /// 开始原生按键录入（macOS）
     #[cfg(target_os = "macos")]
     pub fn start_recording(&self) -> Result<(), String> {

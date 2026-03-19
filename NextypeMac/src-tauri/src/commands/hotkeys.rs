@@ -121,17 +121,14 @@ pub async fn register_all_hotkeys(
     Ok(())
 }
 
-/// 获取已注册的快捷键
+/// 获取已配置的快捷键（从持久化配置读取，而非运行时注册状态）
+/// 运行时注册状态依赖设备在线才会填充，但 UI 需要始终显示用户配置的值
 #[tauri::command]
 pub async fn get_registered_hotkeys(
-    manager: State<'_, SharedHotkeyManager>,
+    state: State<'_, SharedAppState>,
 ) -> Result<HashMap<String, Vec<String>>, String> {
-    let manager_guard = manager.read();
-    if let Some(hotkey_manager) = manager_guard.as_ref() {
-        Ok(hotkey_manager.get_registered())
-    } else {
-        Ok(HashMap::new())
-    }
+    let config = state.get_config();
+    Ok(config.hotkeys)
 }
 
 /// 保存点击坐标配置
