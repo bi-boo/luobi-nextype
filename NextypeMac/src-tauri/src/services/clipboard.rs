@@ -62,8 +62,6 @@ pub async fn paste() -> Result<bool, String> {
         tracing::warn!(
             "[本地处理] ⚠️ 缺少辅助功能权限，无法执行自动粘贴，请在系统设置中授予权限"
         );
-        // 自动打开辅助功能设置页面（与 Electron 弹窗提示对齐）
-        let _ = open_accessibility_settings();
         return Ok(false);
     }
 
@@ -195,6 +193,12 @@ pub async fn handle_clipboard_content(
         _ => {
             tracing::warn!("[本地处理] ⚠️ 未知操作: {}", action);
         }
+    }
+
+    // 粘贴失败且缺少辅助功能权限 → 打开偏好设置引导用户授权
+    if !execute_success && action != "copy" && !has_accessibility_permission() {
+        tracing::info!("粘贴因缺少辅助功能权限失败，打开偏好设置引导授权");
+        let _ = crate::services::tray::create_preferences_window(app, Some("devices"));
     }
 
     // 记录统计数据（与 Electron 的 stats.recordPaste 对齐）

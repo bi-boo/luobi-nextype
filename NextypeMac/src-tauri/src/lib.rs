@@ -292,12 +292,18 @@ pub fn run() {
                 });
             }
 
-            // 启动引导：没有配对设备时自动打开偏好设置到"配对手机"页
+            // 启动引导：无配对设备 或 有设备但无辅助功能权限 → 打开配对手机页
             {
                 let state_ref = app.state::<state::SharedAppState>();
                 let config = state_ref.get_config();
-                if config.trusted_devices.is_empty() {
+                let no_devices = config.trusted_devices.is_empty();
+                let no_permission = !no_devices && !services::clipboard::has_accessibility_permission();
+
+                if no_devices {
                     tracing::info!("未检测到配对设备，自动打开配对手机页面");
+                    let _ = services::tray::create_preferences_window(app.handle(), Some("devices"));
+                } else if no_permission {
+                    tracing::info!("已有配对设备但缺少辅助功能权限，自动打开配对手机页面引导授权");
                     let _ = services::tray::create_preferences_window(app.handle(), Some("devices"));
                 }
             }

@@ -234,10 +234,7 @@
                         <div id="accessibilityGuideIcon" style="width: 8px; height: 8px; border-radius: 50%; background: var(--warning);"></div>
                         <span id="accessibilityGuideText">尚未授权</span>
                     </div>
-                    <div style="display: flex; gap: 10px; justify-content: center;">
-                        <button id="btnOpenAccessibility" class="btn btn-primary" style="padding: 8px 20px; font-size: 13px;">打开系统设置</button>
-                        <button id="btnSkipAccessibility" class="btn" style="padding: 8px 20px; font-size: 13px;">稍后设置</button>
-                    </div>
+                    <button id="btnOpenAccessibility" class="btn btn-primary" style="padding: 8px 20px; font-size: 13px;">打开系统设置</button>
                 </div>
             </div>
 
@@ -888,9 +885,6 @@
                 // 引导卡片按钮事件
                 document.getElementById('btnOpenAccessibility')?.addEventListener('click', () => {
                     invoke('open_accessibility_settings');
-                });
-                document.getElementById('btnSkipAccessibility')?.addEventListener('click', () => {
-                    hideAccessibilityGuide();
                 });
 
                 window.removeDevice = async function (id) {
