@@ -437,6 +437,8 @@ pub struct NativeFnHotkey {
     recording_monitor: Arc<RwLock<Option<*mut std::ffi::c_void>>>,
     recording_state: Arc<RwLock<RecordingInternalState>>,
     tap_runloop: Arc<RwLock<Option<CFRunLoop>>>,
+    /// CGEventTap 的 Mach port 指针，用于在 stop 时先禁用 tap 避免吞按键
+    tap_port: Arc<std::sync::atomic::AtomicPtr<std::ffi::c_void>>,
     /// 标记是否有等待权限的监听器线程（用于应用激活时触发重试）
     pending_listener: Arc<std::sync::atomic::AtomicBool>,
     /// 用于唤醒等待权限的线程
@@ -464,6 +466,7 @@ impl NativeFnHotkey {
             recording_monitor: Arc::new(RwLock::new(None)),
             recording_state: Arc::new(RwLock::new(RecordingInternalState::default())),
             tap_runloop: Arc::new(RwLock::new(None)),
+            tap_port: Arc::new(std::sync::atomic::AtomicPtr::new(std::ptr::null_mut())),
             pending_listener: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             pending_notify: Arc::new((std::sync::Mutex::new(false), std::sync::Condvar::new())),
             app_handle,
@@ -673,6 +676,7 @@ impl NativeFnHotkey {
         let registered = self.registered.clone();
         let app_handle = self.app_handle.clone();
         let runloop_ref = self.tap_runloop.clone();
+        let tap_port_ref = self.tap_port.clone();
         let pending_listener = self.pending_listener.clone();
         let pending_notify = self.pending_notify.clone();
 
@@ -727,9 +731,8 @@ impl NativeFnHotkey {
             // 权限已就绪，创建 CGEventTap
             let monitor_state = RwLock::new(GlobalMonitorInternalState::default());
 
-            // 用于在回调中重新启用被系统禁用的 tap（锁屏唤醒等场景）
-            let tap_port_ptr: Arc<std::sync::atomic::AtomicPtr<std::ffi::c_void>> =
-                Arc::new(std::sync::atomic::AtomicPtr::new(std::ptr::null_mut()));
+            // 用于在回调和 stop_global_listener 中访问 tap 的 Mach port
+            let tap_port_ptr = tap_port_ref;
             let tap_port_for_callback = tap_port_ptr.clone();
 
             let tap = CGEventTap::new(
@@ -1135,6 +1138,19 @@ impl NativeFnHotkey {
     }
 
     pub fn stop_global_listener(&self) {
+        // 先禁用 CGEventTap，使其立即从系统事件处理链中移除，避免吞按键
+        let port = self.tap_port.swap(std::ptr::null_mut(), std::sync::atomic::Ordering::SeqCst);
+        if !port.is_null() {
+            extern "C" {
+                fn CGEventTapEnable(tap: *mut std::ffi::c_void, enable: bool);
+            }
+            unsafe {
+                CGEventTapEnable(port, false);
+            }
+            tracing::info!("已禁用 CGEventTap");
+        }
+
+        // 再停止 RunLoop，让监听线程退出
         let mut runloop_ref = self.tap_runloop.write();
         if let Some(runloop) = runloop_ref.take() {
             runloop.stop();
