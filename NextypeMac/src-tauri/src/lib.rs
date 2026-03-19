@@ -292,6 +292,16 @@ pub fn run() {
                 });
             }
 
+            // 启动引导：没有配对设备时自动打开偏好设置到"配对手机"页
+            {
+                let state_ref = app.state::<state::SharedAppState>();
+                let config = state_ref.get_config();
+                if config.trusted_devices.is_empty() {
+                    tracing::info!("未检测到配对设备，自动打开配对手机页面");
+                    let _ = services::tray::create_preferences_window(app.handle(), Some("devices"));
+                }
+            }
+
             tracing::info!("🚀 落笔 Nextype 启动成功");
             Ok(())
         })

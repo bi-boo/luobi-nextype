@@ -220,6 +220,27 @@
                 </div>
             </div>
 
+            <!-- 辅助功能权限引导（无权限时显示） -->
+            <div id="accessibilityGuide" style="display: none; margin-bottom: 20px;">
+                <div class="section-header">还差一步</div>
+                <div style="background: var(--bg-card); padding: 20px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 40px; margin-bottom: 12px;">&#128272;</div>
+                    <div style="font-size: 15px; font-weight: 500; color: var(--text-primary); margin-bottom: 8px;">授权辅助功能权限</div>
+                    <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.6;">
+                        落笔需要「辅助功能」权限来模拟键盘粘贴操作。<br>
+                        点击下方按钮，在系统设置中找到「落笔 Nextype」并开启开关。
+                    </div>
+                    <div id="accessibilityGuideStatus" style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary);">
+                        <div id="accessibilityGuideIcon" style="width: 8px; height: 8px; border-radius: 50%; background: var(--warning);"></div>
+                        <span id="accessibilityGuideText">尚未授权</span>
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button id="btnOpenAccessibility" class="btn btn-primary" style="padding: 8px 20px; font-size: 13px;">打开系统设置</button>
+                        <button id="btnSkipAccessibility" class="btn" style="padding: 8px 20px; font-size: 13px;">稍后设置</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- 区域3：下载手机端应用 -->
             <div class="section-header">下载手机端应用</div>
             <div style="display: flex; gap: 12px;">
@@ -590,6 +611,14 @@
                                     btnRefreshCode.textContent = '生成中...';
                                 }
                             }
+                            // 已有设备但无辅助功能权限时显示引导
+                            invoke('get_config').then(cfg => {
+                                if (cfg.trustedDevices && cfg.trustedDevices.length > 0) {
+                                    invoke('has_accessibility_permission').then(hasPerm => {
+                                        if (!hasPerm) showAccessibilityGuide();
+                                    });
+                                }
+                            });
                         }
                     });
                 });
@@ -751,6 +780,11 @@
                     invoke('has_accessibility_permission').then(hasPermission => {
                         accessibilitySwitch.checked = hasPermission;
                     });
+                    // 引导卡片可见时刷新权限状态
+                    const guide = document.getElementById('accessibilityGuide');
+                    if (guide && guide.style.display !== 'none') {
+                        checkAccessibilityGuideStatus();
+                    }
                 });
 
                 // Load Config - 提取为命名函数，供多处调用
@@ -816,6 +850,48 @@
                     });
                     container.innerHTML = html;
                 }
+
+                // ---- 辅助功能权限引导逻辑 ----
+                function showAccessibilityGuide() {
+                    const guide = document.getElementById('accessibilityGuide');
+                    if (!guide) return;
+                    guide.style.display = 'block';
+                    guide.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    checkAccessibilityGuideStatus();
+                }
+
+                function hideAccessibilityGuide() {
+                    const guide = document.getElementById('accessibilityGuide');
+                    if (guide) guide.style.display = 'none';
+                }
+
+                async function checkAccessibilityGuideStatus() {
+                    const guide = document.getElementById('accessibilityGuide');
+                    if (!guide || guide.style.display === 'none') return;
+                    try {
+                        const hasPerm = await invoke('has_accessibility_permission');
+                        const icon = document.getElementById('accessibilityGuideIcon');
+                        const text = document.getElementById('accessibilityGuideText');
+                        if (hasPerm) {
+                            icon.style.background = 'var(--success)';
+                            text.textContent = '已授权';
+                            setTimeout(() => hideAccessibilityGuide(), 2000);
+                        } else {
+                            icon.style.background = 'var(--warning)';
+                            text.textContent = '尚未授权';
+                        }
+                    } catch (e) {
+                        console.error('[Preferences] 检查辅助功能权限失败:', e);
+                    }
+                }
+
+                // 引导卡片按钮事件
+                document.getElementById('btnOpenAccessibility')?.addEventListener('click', () => {
+                    invoke('open_accessibility_settings');
+                });
+                document.getElementById('btnSkipAccessibility')?.addEventListener('click', () => {
+                    hideAccessibilityGuide();
+                });
 
                 window.removeDevice = async function (id) {
                     // 先通知中继服务器解除配对（可能未连接，需 try-catch）
@@ -908,6 +984,12 @@
                     // 强制刷新配置以更新设备列表
                     const freshConfig = await invoke('get_config');
                     loadConfig(freshConfig);
+
+                    // 配对成功后检查辅助功能权限，未授权则引导
+                    const hasPermAfterPairing = await invoke('has_accessibility_permission');
+                    if (!hasPermAfterPairing) {
+                        showAccessibilityGuide();
+                    }
                 });
 
                 // 关于页面的按钮事件（通过 HTML inline onclick 调用全局 openExternal）
@@ -1086,11 +1168,18 @@
                 console.log('[Preferences] 发起握手请求...');
 
                 // 请求初始配置
-                invoke('get_config').then(configData => {
+                invoke('get_config').then(async (configData) => {
                     _lastSavedConfig = { ...configData };
                     loadConfig(configData);
                     window.__TAURI_HANDSHAKE_DONE__ = true;
                     console.log('[Preferences] 握手已完成，UI 状态已锁定');
+
+                    // 初始化时：hash 为 devices 且已有设备但无权限 → 显示引导
+                    const hash = window.location.hash.replace('#', '');
+                    if (hash === 'devices' && configData.trustedDevices && configData.trustedDevices.length > 0) {
+                        const hasPerm = await invoke('has_accessibility_permission');
+                        if (!hasPerm) showAccessibilityGuide();
+                    }
                 });
 
                 // 请求初始快捷键配置（3 个并行 invoke）
