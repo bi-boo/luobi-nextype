@@ -1,0 +1,26 @@
+# 测试：设置页中各 Toggle 开关可以正常切换
+appId: com.nextype.app
+---
+- launchApp:
+    clearState: true
+
+# 进入主界面 → 设置
+- tapOn: "稍后配对"
+- tapOn:
+    id: "gearshape"
+
+# 切换「插入时同步到剪贴板」
+- tapOn: "插入时同步到剪贴板"
+
+# 切换「发送时同步到剪贴板」
+- tapOn: "发送时同步到剪贴板"
+
+# 切换「保持屏幕常亮」
+- tapOn: "保持屏幕常亮"
+
+# 验证设置页仍然正常显示（没有崩溃）
+- assertVisible: "设置"
+
+# 关闭设置
+- tapOn: "完成"
+- assertVisible: "落笔"

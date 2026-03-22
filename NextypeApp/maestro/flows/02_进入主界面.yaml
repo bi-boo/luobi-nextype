@@ -1,0 +1,15 @@
+# 测试：点击「稍后配对」跳过配对，进入主输入界面
+appId: com.nextype.app
+---
+- launchApp:
+    clearState: true
+
+# 点击稍后配对
+- tapOn: "稍后配对"
+
+# 验证主界面关键元素
+- assertVisible: "落笔"
+- assertVisible: "Nextype"
+- assertVisible: "发送"
+- assertVisible: "插入"
+- assertVisible: "清空"

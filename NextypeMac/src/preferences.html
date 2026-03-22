@@ -1491,8 +1491,38 @@
                     );
                 }
 
+                function validateAcceleratorSafety(accelerator) {
+                    if (!accelerator) return null;
+
+                    const parts = accelerator.split('+').filter(Boolean);
+                    if (!parts.includes('Fn')) return null;
+
+                    const modifierTokens = new Set([
+                        'Fn', 'Ctrl', 'Control', 'Alt', 'Option', 'Shift',
+                        'Command', 'CommandOrControl', 'Cmd', 'Meta'
+                    ]);
+                    const primaryKeys = parts.filter(token => !modifierTokens.has(token));
+
+                    if (primaryKeys.length === 0) {
+                        return '为避免影响系统流畅度，Fn 快捷键仅支持“Fn + 普通按键”，不支持单独 Fn 或纯修饰键组合。';
+                    }
+
+                    if (['Enter', 'Return', 'Delete', 'Backspace', 'ForwardDelete'].includes(primaryKeys[0])) {
+                        return '为避免影响系统流畅度，不支持 Fn+Enter 或 Fn+Delete 这类高风险组合。';
+                    }
+
+                    return null;
+                }
+
                 // Save single hotkey
                 function saveHotkeyConfig(name, accelerator) {
+                    const safetyError = validateAcceleratorSafety(accelerator);
+                    if (safetyError) {
+                        alert(safetyError);
+                        switchAllHotkeysGroup(currentGroupIndex);
+                        return;
+                    }
+
                     hotkeyGroups[name][currentGroupIndex] = accelerator;
 
                     // 检查同一功能的两组是否相同

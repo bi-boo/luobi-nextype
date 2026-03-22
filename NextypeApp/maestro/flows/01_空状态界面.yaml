@@ -1,0 +1,12 @@
+# 测试：App 首次启动显示空状态界面（无配对设备时）
+appId: com.nextype.app
+---
+- launchApp:
+    clearState: true
+
+# 验证欢迎界面关键元素都正常显示
+- assertVisible: "欢迎使用落笔 Nextype"
+- assertVisible: "请先添加一台电脑设备"
+- assertVisible: "配对电脑"
+- assertVisible: "稍后配对"
+- assertVisible: "使用场景"

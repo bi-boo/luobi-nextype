@@ -156,6 +156,31 @@ pub fn run() {
                 }
             }
 
+            // 清理高风险的旧 Fn 快捷键配置，避免启动后继续注册到全局事件监听
+            #[cfg(target_os = "macos")]
+            {
+                use tauri_plugin_store::StoreExt;
+
+                let state_ref = app.state::<state::SharedAppState>();
+                let mut config = state_ref.get_config();
+                let removed = commands::sanitize_hotkeys_for_macos(&mut config);
+
+                if !removed.is_empty() {
+                    state_ref.update_config(|c| *c = config.clone());
+                    if let Ok(store) = app.store("config.json") {
+                        if let Ok(value) = serde_json::to_value(&config) {
+                            store.set("config", value);
+                            let _ = store.save();
+                        }
+                    }
+                    tracing::warn!(
+                        "⚠️ 已移除 {} 个高风险 Fn 快捷键配置: {}",
+                        removed.len(),
+                        removed.join(", ")
+                    );
+                }
+            }
+
             // 迁移旧 device_name：将 hostname 格式（如 xxx.local）升级为 ComputerName
             #[cfg(target_os = "macos")]
             {

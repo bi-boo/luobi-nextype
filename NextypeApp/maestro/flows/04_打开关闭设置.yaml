@@ -1,0 +1,28 @@
+# 测试：打开设置页，验证设置项，关闭设置页
+appId: com.nextype.app
+---
+- launchApp:
+    clearState: true
+
+# 进入主界面
+- tapOn: "稍后配对"
+
+# 点击右上角齿轮图标打开设置
+- tapOn:
+    id: "gearshape"
+
+# 验证设置页关键元素
+- assertVisible: "设置"
+- assertVisible: "惯用手"
+- assertVisible: "输入框字号"
+- assertVisible: "插入时同步到剪贴板"
+- assertVisible: "发送时同步到剪贴板"
+- assertVisible: "保持屏幕常亮"
+- assertVisible: "使用说明"
+
+# 点击完成关闭设置
+- tapOn: "完成"
+
+# 验证回到主界面
+- assertVisible: "落笔"
+- assertVisible: "Nextype"

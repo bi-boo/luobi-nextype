@@ -1,0 +1,23 @@
+# 测试：在输入框中输入文字，然后点击清空按钮
+appId: com.nextype.app
+---
+- launchApp:
+    clearState: true
+
+# 进入主界面
+- tapOn: "稍后配对"
+
+# 等待界面稳定，TextEditor 自动聚焦
+- waitForAnimationToEnd
+
+# 输入测试文字
+- inputText: "这是一段测试文字，用于验证输入框功能"
+
+# 验证文字已出现在输入框中
+- assertVisible: "这是一段测试文字，用于验证输入框功能"
+
+# 点击清空按钮
+- tapOn: "清空"
+
+# 验证文字已被清除
+- assertNotVisible: "这是一段测试文字，用于验证输入框功能"

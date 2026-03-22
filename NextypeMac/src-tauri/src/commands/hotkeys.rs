@@ -8,9 +8,94 @@ use tauri_plugin_store::StoreExt;
 
 use crate::services::hotkey_manager::HotkeyManager;
 use crate::state::SharedAppState;
+use crate::utils::config::AppConfig;
 
 /// 快捷键管理器的共享类型
 pub type SharedHotkeyManager = std::sync::Arc<parking_lot::RwLock<Option<HotkeyManager>>>;
+
+const FN_SHORTCUT_SAFETY_HINT: &str =
+    "为避免影响系统流畅度，Fn 快捷键仅支持“Fn + 普通按键”，不支持单独 Fn、Fn+Shift、Fn+Ctrl、Fn+Alt、Fn+Command，也不支持 Fn+Enter / Fn+Delete。";
+
+fn is_fn_accelerator(accelerator: &str) -> bool {
+    accelerator == "Fn" || accelerator.starts_with("Fn+")
+}
+
+fn is_modifier_token(token: &str) -> bool {
+    matches!(
+        token,
+        "Fn"
+            | "Ctrl"
+            | "Control"
+            | "Alt"
+            | "Option"
+            | "Shift"
+            | "Command"
+            | "CommandOrControl"
+            | "Cmd"
+            | "Meta"
+    )
+}
+
+fn validate_macos_fn_shortcut(accelerator: &str) -> Result<(), String> {
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = accelerator;
+        return Ok(());
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        if !is_fn_accelerator(accelerator) {
+            return Ok(());
+        }
+
+        let parts: Vec<&str> = accelerator.split('+').filter(|part| !part.is_empty()).collect();
+        let primary_keys: Vec<&str> = parts
+            .iter()
+            .copied()
+            .filter(|token| !is_modifier_token(token))
+            .collect();
+
+        if primary_keys.is_empty() {
+            return Err(FN_SHORTCUT_SAFETY_HINT.to_string());
+        }
+
+        let primary_key = primary_keys[0];
+        if matches!(primary_key, "Enter" | "Return" | "Delete" | "Backspace" | "ForwardDelete") {
+            return Err(FN_SHORTCUT_SAFETY_HINT.to_string());
+        }
+
+        Ok(())
+    }
+}
+
+fn validate_hotkey_safety(accelerators: &[String]) -> Result<(), String> {
+    for accelerator in accelerators {
+        if accelerator.is_empty() {
+            continue;
+        }
+        validate_macos_fn_shortcut(accelerator)?;
+    }
+    Ok(())
+}
+
+pub fn sanitize_hotkeys_for_macos(config: &mut AppConfig) -> Vec<String> {
+    let mut removed = Vec::new();
+
+    for (action, accelerators) in config.hotkeys.iter_mut() {
+        accelerators.retain(|accelerator| {
+            if validate_macos_fn_shortcut(accelerator).is_ok() {
+                true
+            } else {
+                removed.push(format!("{} -> {}", action, accelerator));
+                false
+            }
+        });
+    }
+
+    config.hotkeys.retain(|_, accelerators| !accelerators.is_empty());
+    removed
+}
 
 /// 注册单个快捷键（向后兼容，转换为数组格式）
 #[tauri::command]
@@ -38,6 +123,7 @@ pub async fn register_hotkey_group(
     action: String,
     accelerators: Vec<String>,
 ) -> Result<(), String> {
+    validate_hotkey_safety(&accelerators)?;
     check_hotkey_conflicts(&action, &accelerators, &state)?;
 
     let manager_guard = manager.read();
@@ -114,6 +200,10 @@ pub async fn register_all_hotkeys(
     manager: State<'_, SharedHotkeyManager>,
     hotkeys: HashMap<String, Vec<String>>,
 ) -> Result<(), String> {
+    for accelerators in hotkeys.values() {
+        validate_hotkey_safety(accelerators)?;
+    }
+
     let manager_guard = manager.read();
     if let Some(hotkey_manager) = manager_guard.as_ref() {
         hotkey_manager.register_all(hotkeys)?;

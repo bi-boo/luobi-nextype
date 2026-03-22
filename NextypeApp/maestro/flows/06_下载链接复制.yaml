@@ -1,0 +1,14 @@
+# 测试：空状态界面点击下载链接，Toast 提示正常显示
+appId: com.nextype.app
+---
+- launchApp:
+    clearState: true
+
+# 验证下载链接可见
+- assertVisible: "yuanfengai.cn"
+
+# 点击链接触发复制
+- tapOn: "yuanfengai.cn"
+
+# 验证 Toast 提示出现
+- assertVisible: "链接已复制"
