@@ -521,28 +521,76 @@ async fn relay_client_task(
 }
 
 /// 获取系统闲置时间（秒）- macOS 实现
+/// 通过 IOKit FFI 直接读取 HIDIdleTime，避免每 10 秒 fork+exec ioreg 子进程
 fn get_system_idle_time() -> u64 {
-    let output = std::process::Command::new("ioreg")
-        .args(["-c", "IOHIDSystem", "-d", "4"])
-        .output();
+    use core_foundation::base::TCFType;
+    use core_foundation::string::CFString;
+    use std::ffi::c_void;
 
-    match output {
-        Ok(out) => {
-            let stdout = String::from_utf8_lossy(&out.stdout);
-            // 查找 HIDIdleTime 的值（纳秒）
-            for line in stdout.lines() {
-                if line.contains("HIDIdleTime") {
-                    if let Some(val_str) = line.split('=').last() {
-                        let trimmed = val_str.trim();
-                        if let Ok(nanos) = trimmed.parse::<u64>() {
-                            return nanos / 1_000_000_000; // 纳秒转秒
-                        }
-                    }
-                }
-            }
+    type IOObject = u32;
+
+    #[link(name = "IOKit", kind = "framework")]
+    extern "C" {
+        fn IOServiceMatching(name: *const i8) -> *mut c_void;
+        fn IOServiceGetMatchingService(main_port: u32, matching: *mut c_void) -> IOObject;
+        fn IORegistryEntryCreateCFProperty(
+            entry: IOObject,
+            key: *const c_void,
+            allocator: *const c_void,
+            options: u32,
+        ) -> *const c_void;
+        fn IOObjectRelease(object: IOObject) -> i32;
+    }
+
+    extern "C" {
+        fn CFNumberGetValue(
+            number: *const c_void,
+            the_type: i32,
+            value_ptr: *mut c_void,
+        ) -> bool;
+        fn CFRelease(cf: *const c_void);
+    }
+
+    const K_CF_NUMBER_SINT64_TYPE: i32 = 4;
+
+    unsafe {
+        let matching = IOServiceMatching(b"IOHIDSystem\0".as_ptr() as *const i8);
+        if matching.is_null() {
+            return 0;
+        }
+
+        // IOServiceGetMatchingService consumes the matching dictionary
+        let service = IOServiceGetMatchingService(0, matching);
+        if service == 0 {
+            return 0;
+        }
+
+        let key = CFString::new("HIDIdleTime");
+        let property = IORegistryEntryCreateCFProperty(
+            service,
+            key.as_concrete_TypeRef() as *const c_void,
+            std::ptr::null(),
+            0,
+        );
+        IOObjectRelease(service);
+
+        if property.is_null() {
+            return 0;
+        }
+
+        let mut nanos: i64 = 0;
+        let ok = CFNumberGetValue(
+            property,
+            K_CF_NUMBER_SINT64_TYPE,
+            &mut nanos as *mut i64 as *mut c_void,
+        );
+        CFRelease(property);
+
+        if ok && nanos > 0 {
+            (nanos as u64) / 1_000_000_000
+        } else {
             0
         }
-        Err(_) => 0,
     }
 }
 

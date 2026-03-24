@@ -3,16 +3,19 @@
 // ============================================================
 
 use std::process::Command;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{AppHandle, Emitter};
 use tauri_plugin_clipboard_manager::ClipboardExt;
+
+/// 缓存：CGEventTap 完整验证通过后置 true，避免每次粘贴都创建/销毁临时 tap
+static ACCESSIBILITY_VERIFIED: AtomicBool = AtomicBool::new(false);
 
 /// 检查是否有 Accessibility 权限
 ///
 /// 不能只依赖 AXIsProcessTrusted()：覆盖安装后旧的 TCC 条目仍存在，
 /// AXIsProcessTrusted() 返回 true，但二进制签名已变，实际操作会失败。
-/// 因此用 CGEventTap 创建做真实验证——系统在此处校验代码签名。
-///
-/// 检测到旧条目失效时，自动清除并重新添加当前 app，用户只需开启开关。
+/// 因此首次调用时用 CGEventTap 创建做真实验证——系统在此处校验代码签名。
+/// 验证通过后缓存结果，后续调用只做轻量 AXIsProcessTrusted() 检查。
 pub fn has_accessibility_permission() -> bool {
     extern "C" {
         fn AXIsProcessTrusted() -> bool;
@@ -20,10 +23,16 @@ pub fn has_accessibility_permission() -> bool {
 
     // 快速检查：TCC 数据库无条目则直接返回 false
     if !unsafe { AXIsProcessTrusted() } {
+        ACCESSIBILITY_VERIFIED.store(false, Ordering::Relaxed);
         return false;
     }
 
-    // 真实验证：尝试创建一个只读 CGEventTap（无副作用，立即释放）
+    // 已通过完整验证 → 直接返回，跳过 CGEventTap 创建/销毁
+    if ACCESSIBILITY_VERIFIED.load(Ordering::Relaxed) {
+        return true;
+    }
+
+    // 首次验证：尝试创建一个只读 CGEventTap（无副作用，立即释放）
     // 覆盖安装后旧条目的二进制签名不匹配，此处会返回 NULL
     use core_graphics::event::{
         CGEventTap, CGEventTapLocation, CGEventTapOptions, CGEventTapPlacement, CGEventType,
@@ -37,7 +46,16 @@ pub fn has_accessibility_permission() -> bool {
         |_proxy, _type, event| Some(event.clone()),
     );
 
-    tap.is_ok()
+    let ok = tap.is_ok();
+    if ok {
+        ACCESSIBILITY_VERIFIED.store(true, Ordering::Relaxed);
+    }
+    ok
+}
+
+/// 重置 accessibility 权限缓存（粘贴失败时调用，强制下次重新验证）
+pub fn reset_accessibility_cache() {
+    ACCESSIBILITY_VERIFIED.store(false, Ordering::Relaxed);
 }
 
 /// 通过 AXIsProcessTrustedWithOptions(prompt: true) 触发系统添加当前进程到辅助功能列表
@@ -225,10 +243,13 @@ pub async fn handle_clipboard_content(
         }
     }
 
-    // 粘贴失败且缺少辅助功能权限 → 打开偏好设置引导用户授权
-    if !execute_success && action != "copy" && !has_accessibility_permission() {
-        tracing::info!("粘贴因缺少辅助功能权限失败，打开偏好设置引导授权");
-        let _ = crate::services::tray::create_preferences_window(app, Some("devices"));
+    // 粘贴失败 → 重置权限缓存，下次重新做完整验证
+    if !execute_success && action != "copy" {
+        reset_accessibility_cache();
+        if !has_accessibility_permission() {
+            tracing::info!("粘贴因缺少辅助功能权限失败，打开偏好设置引导授权");
+            let _ = crate::services::tray::create_preferences_window(app, Some("devices"));
+        }
     }
 
     // 记录统计数据（与 Electron 的 stats.recordPaste 对齐）
