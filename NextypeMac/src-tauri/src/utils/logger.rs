@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use parking_lot::RwLock;
 use serde::Serialize;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 use tracing::Level;
 use tracing_subscriber::Layer;
 use once_cell::sync::Lazy;
@@ -139,9 +139,11 @@ where
         // 2. 写入文件
         self.write_to_file(&level, &message);
 
-        // 3. 实时推送 (如果 AppHandle 已就绪)
+        // 3. 实时推送（仅当日志窗口已打开时，避免不必要的 IPC 广播开销）
         if let Some(app) = self.app_handle.read().as_ref() {
-            let _ = app.emit("new_log_entry", entry);
+            if app.get_webview_window("logs").is_some() {
+                let _ = app.emit("new_log_entry", entry);
+            }
         }
     }
 }

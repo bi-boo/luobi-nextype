@@ -816,6 +816,17 @@ impl NativeFnHotkey {
                         // ---- flagsChanged：处理纯修饰键快捷键 ----
                         let mut state = monitor_state.write();
 
+                        // 快速路径：Fn 键未参与（当前及之前），且无活跃长按
+                        // 覆盖绝大多数普通打字时的 Shift/Cmd/Option/Ctrl 事件
+                        // 直接更新修饰键状态并返回，跳过三轮 registered 遍历
+                        if !current_mods.r#fn
+                            && !state.previous_modifiers.r#fn
+                            && state.active_longpress.is_none()
+                        {
+                            state.previous_modifiers = current_mods;
+                            return Some(event.clone());
+                        }
+
                         // 如果有 active_longpress 且修饰键不再匹配，释放长按
                         if let Some(ref active_action) = state.active_longpress.clone() {
                             // 检查是否有纯修饰键 longpress 条目不再匹配
@@ -1000,11 +1011,15 @@ impl NativeFnHotkey {
                     let fn_held_from_flags;
                     {
                         let mut state = monitor_state.write();
-                        state.had_key_down_since_fn = true;
                         // 从 flagsChanged 追踪的状态获取 Fn 是否按住
                         // macOS 在 Fn+Return 时可能从 keyDown 事件的 flags 中剥离 Fn 标志，
                         // 但 flagsChanged 事件已经记录了 Fn 按下
                         fn_held_from_flags = state.previous_modifiers.r#fn;
+
+                        // 只有 Fn 键参与时才需要追踪此 flag（用于纯修饰键快捷键检测）
+                        if fn_held_from_flags || current_mods.r#fn {
+                            state.had_key_down_since_fn = true;
+                        }
 
                         // 如果已有 active_longpress，过滤 OS 按键重复
                         if state.active_longpress.is_some() {

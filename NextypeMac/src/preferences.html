@@ -1007,9 +1007,12 @@
                     document.getElementById('todayChars').textContent = (stats.todayChars || stats.today_chars || 0).toLocaleString();
                 }
 
+                let _contributionGraphDebounceTimer = null;
                 listen('stats_updated', (e) => {
                     updateStatsUI(e.payload);
-                    loadContributionGraph();
+                    // 防抖：连续多次同步只重建一次贡献图，减少 WebKit GPU 纹理分配压力
+                    clearTimeout(_contributionGraphDebounceTimer);
+                    _contributionGraphDebounceTimer = setTimeout(() => loadContributionGraph(), 1000);
                 });
 
                 // Contribution Graph
