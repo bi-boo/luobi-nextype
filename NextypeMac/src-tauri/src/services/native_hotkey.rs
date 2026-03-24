@@ -786,6 +786,14 @@ impl NativeFnHotkey {
 
                     // ---- KeyUp：处理 longpress 释放 ----
                     if is_key_up {
+                        // 快速路径：绝大多数 KeyUp 无长按，读锁检查即可放行
+                        {
+                            let state = monitor_state.read();
+                            if state.active_longpress.is_none() {
+                                return Some(event.clone());
+                            }
+                        }
+                        // 有活跃长按，才需要写锁
                         let mut state = monitor_state.write();
                         if let Some(ref active_action) = state.active_longpress.clone() {
                             tracing::info!("🔔 长按快捷键释放 (KeyUp): {}", active_action);
@@ -1010,16 +1018,9 @@ impl NativeFnHotkey {
                     // ---- keyDown：处理 修饰键+主键 快捷键 ----
                     let fn_held_from_flags;
                     {
-                        let mut state = monitor_state.write();
-                        // 从 flagsChanged 追踪的状态获取 Fn 是否按住
-                        // macOS 在 Fn+Return 时可能从 keyDown 事件的 flags 中剥离 Fn 标志，
-                        // 但 flagsChanged 事件已经记录了 Fn 按下
+                        // 先用读锁处理常见情况（无长按、无防抖），避免不必要的写锁
+                        let state = monitor_state.read();
                         fn_held_from_flags = state.previous_modifiers.r#fn;
-
-                        // 只有 Fn 键参与时才需要追踪此 flag（用于纯修饰键快捷键检测）
-                        if fn_held_from_flags || current_mods.r#fn {
-                            state.had_key_down_since_fn = true;
-                        }
 
                         // 如果已有 active_longpress，过滤 OS 按键重复
                         if state.active_longpress.is_some() {
@@ -1032,6 +1033,11 @@ impl NativeFnHotkey {
                                 return None;
                             }
                         }
+                    }
+
+                    // 只有 Fn 键参与时才需要写锁更新 had_key_down_since_fn
+                    if fn_held_from_flags || current_mods.r#fn {
+                        monitor_state.write().had_key_down_since_fn = true;
                     }
 
                     let entries = registered.read();
