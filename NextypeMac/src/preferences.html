@@ -639,6 +639,17 @@
                 let currentConfig = {};
                 let pairingTimerInterval = null;
 
+                // 统一 unlisten 管理：所有 Tauri listen() 的 unlisten 函数收集于此
+                // beforeunload 时统一调用，防止窗口重建后监听器堆积导致内存泄漏
+                const _unlisteners = [];
+                window.addEventListener('beforeunload', () => {
+                    _unlisteners.forEach(fn => fn());
+                    if (pairingTimerInterval) clearInterval(pairingTimerInterval);
+                    if (typeof _contributionGraphDebounceTimer !== 'undefined' && _contributionGraphDebounceTimer) {
+                        clearTimeout(_contributionGraphDebounceTimer);
+                    }
+                });
+
                 // Debounce utility
                 function debounce(func, wait) {
                     let timeout;
@@ -803,7 +814,7 @@
                 // 监听后端配置更新事件
                 listen('config_updated', (e) => {
                     loadConfig(e.payload);
-                });
+                }).then(u => _unlisteners.push(u));
 
                 // Render Trusted Devices
                 function renderTrustedDevices(devices) {
@@ -926,7 +937,7 @@
                         code: payload.code || '----',
                         expiresIn: payload.expiresIn || payload.expires_in || 60
                     });
-                });
+                }).then(u => _unlisteners.push(u));
 
                 function handlePairingCode(payload) {
                     const code = payload.code || '----';
@@ -984,7 +995,7 @@
                     if (!hasPermAfterPairing) {
                         showAccessibilityGuide();
                     }
-                });
+                }).then(u => _unlisteners.push(u));
 
                 // 关于页面的按钮事件（通过 HTML inline onclick 调用全局 openExternal）
 
@@ -1013,7 +1024,7 @@
                     // 防抖：连续多次同步只重建一次贡献图，减少 WebKit GPU 纹理分配压力
                     clearTimeout(_contributionGraphDebounceTimer);
                     _contributionGraphDebounceTimer = setTimeout(() => loadContributionGraph(), 1000);
-                });
+                }).then(u => _unlisteners.push(u));
 
                 // Contribution Graph
                 async function loadContributionGraph() {
@@ -1102,19 +1113,6 @@
                         cell.setAttribute('data-pastes', record.pastes);
                         cell.setAttribute('data-chars', record.chars);
 
-                        cell.addEventListener('mouseenter', (e) => {
-                            if (isFuture) return;
-                            const pastes = parseInt(cell.getAttribute('data-pastes')) || 0;
-                            const chars = parseInt(cell.getAttribute('data-chars')) || 0;
-                            tooltip.innerHTML = `<strong>${dateStr}</strong><br>同步 ${pastes} 次 · ${chars.toLocaleString()} 字`;
-                            tooltip.style.display = 'block';
-                            positionTooltip(e);
-                        });
-                        cell.addEventListener('mousemove', positionTooltip);
-                        cell.addEventListener('mouseleave', () => {
-                            tooltip.style.display = 'none';
-                        });
-
                         grid.appendChild(cell);
                     }
                 }
@@ -1129,6 +1127,31 @@
                     _tooltip.style.left = x + 'px';
                     _tooltip.style.top = y + 'px';
                 }
+
+                // 贡献图事件委托：全局只注册一次，避免每次 renderContributionGraph 都绑定 182*3 个监听器
+                (function initContributionGridEvents() {
+                    const grid = document.getElementById('contributionGrid');
+                    if (!grid) return;
+                    grid.addEventListener('mouseover', (e) => {
+                        const cell = e.target.closest('.contribution-cell');
+                        if (!cell || !cell.hasAttribute('data-level')) return;
+                        const dateStr = cell.getAttribute('data-date');
+                        const pastes = parseInt(cell.getAttribute('data-pastes')) || 0;
+                        const chars = parseInt(cell.getAttribute('data-chars')) || 0;
+                        _tooltip.innerHTML = `<strong>${dateStr}</strong><br>同步 ${pastes} 次 · ${chars.toLocaleString()} 字`;
+                        _tooltip.style.display = 'block';
+                        positionTooltip(e);
+                    });
+                    grid.addEventListener('mousemove', (e) => {
+                        if (_tooltip.style.display !== 'none') positionTooltip(e);
+                    });
+                    grid.addEventListener('mouseout', (e) => {
+                        const cell = e.target.closest('.contribution-cell');
+                        if (cell && !cell.contains(e.relatedTarget)) {
+                            _tooltip.style.display = 'none';
+                        }
+                    });
+                })();
 
                 // Version - 动态获取
                 (async () => {
@@ -1148,7 +1171,7 @@
                     if (button) {
                         button.click();
                     }
-                });
+                }).then(u => _unlisteners.push(u));
 
                 // 处理初始导航意图 (来自 Hash)
                 if (window.__INITIAL_TAB__) {
@@ -1341,14 +1364,14 @@
                     if (inputEl) {
                         setTimeout(() => inputEl.blur(), 0);
                     }
-                });
+                }).then(u => _unlisteners.push(u));
 
                 // 监听原生实时修饰键变化（用户按下/释放修饰键时实时更新显示）
                 listen('hotkey-recording-modifiers', (e) => {
                     if (!currentRecordingInput) return;
                     const { display } = e.payload;
                     currentRecordingInput.input.value = display ? normalizeDisplay(display) : '请按下快捷键...';
-                });
+                }).then(u => _unlisteners.push(u));
 
                 hotkeyInputsArray.forEach(({ name, id }) => {
                     const input = document.getElementById(id);
@@ -1800,7 +1823,7 @@
                         if (platform && longpressExists.platform !== platform) { longpressExists.platform = platform; changed = true; }
                         if (changed) { renderLongpressScreenConfigs(); saveLongpressCoordinatesConfig(); }
                     }
-                });
+                }).then(u => _unlisteners.push(u));
 
                 // ------------------------------------------------------------
                 // 全局事件监听器（从 bridge 底部搬入）
@@ -1815,18 +1838,18 @@
                     } catch (err) {
                         console.error('[Preferences] 刷新配置失败:', err);
                     }
-                });
+                }).then(u => _unlisteners.push(u));
 
                 // 设备离线事件
                 listen('relay:client_offline', (e) => {
                     console.log('[Preferences] 设备离线:', e.payload);
-                });
+                }).then(u => _unlisteners.push(u));
 
                 // 配对码冲突，自动重新生成（forceRandom: true）
                 listen('relay:code_conflict', async (e) => {
                     console.warn('[Preferences] 配对码冲突:', e.payload, '，正在自动重新生成...');
                     requestPairingCode(true);
-                });
+                }).then(u => _unlisteners.push(u));
 
                 // 远端解除配对，移除本地信任设备并刷新
                 listen('relay:device_unpaired', async (e) => {
@@ -1838,7 +1861,7 @@
                     } catch (err) {
                         console.error('[Preferences] 处理解除配对通知失败:', err);
                     }
-                });
+                }).then(u => _unlisteners.push(u));
 
             } // 结束 initializePreferences 函数
         </script>

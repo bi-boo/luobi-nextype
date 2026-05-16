@@ -4,7 +4,7 @@
 
 use parking_lot::RwLock;
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
 use tauri::{AppHandle, Emitter, Manager};
@@ -23,6 +23,10 @@ const HEARTBEAT_INTERVAL_MS: u64 = 500;
 
 /// 全局心跳停止标志
 static HEARTBEAT_ACTIVE: AtomicBool = AtomicBool::new(false);
+
+/// 心跳任务代次：每次新建心跳任务递增，旧任务检测到代次不匹配后自动退出
+/// 防止因竞态条件导致多个心跳任务并发运行
+static HEARTBEAT_GENERATION: AtomicU32 = AtomicU32::new(0);
 
 /// 快捷键管理器
 pub struct HotkeyManager {
@@ -290,20 +294,27 @@ async fn handle_hotkey_press(app: &AppHandle, action: &str) -> Result<(), String
 
     // 如果是 longpress，启动心跳任务
     if action == "longpress" {
+        // 先停止任何已有的心跳任务（递增代次使旧任务自动退出），再启动新任务
+        HEARTBEAT_ACTIVE.store(false, Ordering::SeqCst);
+        let gen = HEARTBEAT_GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
         HEARTBEAT_ACTIVE.store(true, Ordering::SeqCst);
         let app_clone = app.clone();
         tauri::async_runtime::spawn(async move {
-            tracing::info!("💓 心跳任务启动");
-            while HEARTBEAT_ACTIVE.load(Ordering::SeqCst) {
+            tracing::info!("💓 心跳任务启动 (gen={})", gen);
+            while HEARTBEAT_ACTIVE.load(Ordering::SeqCst)
+                && HEARTBEAT_GENERATION.load(Ordering::SeqCst) == gen
+            {
                 tokio::time::sleep(tokio::time::Duration::from_millis(HEARTBEAT_INTERVAL_MS)).await;
-                if !HEARTBEAT_ACTIVE.load(Ordering::SeqCst) {
+                if !HEARTBEAT_ACTIVE.load(Ordering::SeqCst)
+                    || HEARTBEAT_GENERATION.load(Ordering::SeqCst) != gen
+                {
                     break;
                 }
                 if let Err(e) = send_heartbeat(&app_clone).await {
                     tracing::error!("❌ 发送心跳失败: {}", e);
                 }
             }
-            tracing::info!("💓 心跳任务停止");
+            tracing::info!("💓 心跳任务停止 (gen={})", gen);
         });
     }
 

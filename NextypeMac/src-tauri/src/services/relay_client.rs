@@ -692,13 +692,18 @@ async fn handle_server_message(
 
                 if width > 0 && height > 0 {
                     let mut inner_write = inner.write();
-                    inner_write.device_sessions.insert(from.clone(), DeviceSession {
-                        screen_width: width,
-                        screen_height: height,
-                        last_seen: chrono::Utc::now().timestamp(),
-                        platform: platform.clone(),
-                    });
-                    tracing::info!("[中继通知] 📱 设备 {} 屏幕尺寸更新: {}x{}", from, width, height);
+                    // 仅更新已在线（已配对上线）设备的 session，防止陌生设备写入后无法清理
+                    if inner_write.online_clients.contains(&from) {
+                        inner_write.device_sessions.insert(from.clone(), DeviceSession {
+                            screen_width: width,
+                            screen_height: height,
+                            last_seen: chrono::Utc::now().timestamp(),
+                            platform: platform.clone(),
+                        });
+                        tracing::info!("[中继通知] 📱 设备 {} 屏幕尺寸更新: {}x{}", from, width, height);
+                    } else {
+                        tracing::warn!("[中继通知] ⚠️ 忽略未在线设备 {} 的屏幕信息上报", from);
+                    }
                     // 字段名与 Electron 前端期望对齐: clientId, width, height
                     let _ = app.emit("device_screen_info", serde_json::json!({
                         "clientId": from,

@@ -249,13 +249,17 @@
                     '<div class="empty-state">加载失败: ' + escapeHtml(e.message || String(e)) + '</div>';
             }
 
-            await listen('new_log_entry', (event) => {
+            var _unlisten = await listen('new_log_entry', (event) => {
                 var logEntry = event.payload;
                 currentLogs.push(logEntry);
                 if (currentLogs.length > 1000) {
                     currentLogs.shift();
                 }
                 renderLogs();
+            });
+
+            window.addEventListener('beforeunload', function() {
+                if (_unlisten) _unlisten();
             });
 
             document.getElementById('refreshBtn').addEventListener('click', loadLogs);
@@ -322,9 +326,12 @@
         }
 
         function escapeHtml(text) {
-            var div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         }
 
         async function exportLogs() {
