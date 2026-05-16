@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 星云纪 - 生成式智能的动态宇宙漫游</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            overflow-x: hidden;
+            background: #0F172A;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: #fff;
+        }
+
+        /* ==================== COSMIC HERO ==================== */
+        .cosmic-hero {
+            height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        canvas#cosmicCanvas { position: absolute; top: 0; left: 0; }
+
+        .hero-content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            pointer-events: auto;
+            transition: opacity 1s;
+        }
+        .hero-content.hidden { opacity: 0; pointer-events: none; }
+        .hero-content h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #8B5CF6, #10B981, #EC4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: titlePulse 3s ease-in-out infinite;
+        }
+        .hero-content .subtitle {
+            margin-top: 16px;
+            font-size: 1.1rem;
+            color: rgba(255,255,255,0.6);
+            letter-spacing: 0.2em;
+        }
+        .hero-content .hint {
+            margin-top: 30px;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.4);
+            animation: blink 2s ease-in-out infinite;
+        }
+        @keyframes titlePulse {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255,255,255,0.4);
+            font-size: 0.8rem;
+            animation: bounce 2s ease-in-out infinite;
+            cursor: pointer;
+            z-index: 10;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(10px); }
+        }
+
+        /* ==================== TOOLS SECTION ==================== */
+        .tools-section {
+            padding: 120px 60px;
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .section-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 50px;
+            color: #8B5CF6;
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+        .section-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #fff, rgba(255,255,255,0.7));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .section-desc {
+            color: rgba(255,255,255,0.6);
+            font-size: 1.1rem;
+            max-width: 600px;
+        }
+
+        /* Tool Cards Grid */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+            margin-top: 60px;
+        }
+        .tool-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 32px;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent1), var(--accent2));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s ease;
+        }
+        .tool-card:hover::before { transform: scaleX(1); }
+        .tool-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(139, 92, 246, 0.4);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        .tool-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--accent1), var(--accent2));
+        }
+        .tool-name {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .tool-category {
+            font-size: 0.85rem;
+            color: #8B5CF6;
+            margin-bottom: 12px;
+        }
+        .tool-desc {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .tool-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .tool-tag {
+            padding: 4px 12px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.7);
+        }
+        .tool-hover-effect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at var(--mx) var(--my), rgba(139, 92, 246, 0.15), transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .tool-card:hover .tool-hover-effect { opacity: 1; }
+
+        /* ==================== TOOL DETAIL MODAL ==================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal {
+            background: #1a1a2e;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+        .modal-overlay.active .modal { transform: scale(1); }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .modal-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--maccent1), var(--maccent2));
+        }
+        .modal-title { font-size: 1.8rem; font-weight: 700; }
+        .modal-category { color: #8B5CF6; font-size: 0.95rem; margin-top: 4px; }
+        .modal-desc {
+            color: rgba(255,255,255,0.8);
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+        .modal-features {
+            list-style: none;
+        }
+        .modal-features li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.8);
+        }
+        .modal-features li::before {
+            content: '✓';
+            color: #10B981;
+            font-weight: bold;
+        }
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        .modal-btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            margin-top: 30px;
+            background: linear-gradient(135deg, var(--maccent1), var(--maccent2));
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .modal-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4); }
+
+        /* ==================== CAPABILITIES ==================== */
+        .capabilities-section {
+            padding: 120px 60px;
+            background: linear-gradient(180deg, transparent, rgba(139, 92, 246, 0.05), transparent);
+        }
+        .cap-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            max-width: 1200px;
+            margin: 60px auto 0;
+        }
+        .cap-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 28px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .cap-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+        .cap-icon { font-size: 2.5rem; margin-bottom: 16px; }
+        .cap-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 8px; }
+        .cap-desc { font-size: 0.9rem; color: rgba(255,255,255,0.5); }
+
+        /* ==================== CTA ==================== */
+        .cta-section {
+            padding: 150px 60px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.2), transparent 60%);
+        }
+        .cta-section h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            position: relative;
+        }
+        .cta-section p {
+            color: rgba(255,255,255,0.6);
+            font-size: 1.1rem;
+            margin-bottom: 32px;
+            position: relative;
+        }
+        .cta-btns { display: flex; gap: 16px; justify-content: center; position: relative; }
+        .btn {
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #8B5CF6, #EC4899);
+            color: #fff;
+            box-shadow: 0 10px 40px rgba(139, 92, 246, 0.4);
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 50px rgba(139, 92, 246, 0.5); }
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.2); }
+
+        /* ==================== FOOTER ==================== */
+        footer {
+            padding: 40px 60px;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.4);
+            font-size: 0.9rem;
+        }
+
+        /* ==================== NAV ==================== */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 20px 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(20px);
+            background: rgba(15, 23, 42, 0.8);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s;
+        }
+        .nav.scrolled { padding: 15px 60px; background: rgba(15, 23, 42, 0.95); }
+        .nav-logo {
+            font-size: 1.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #8B5CF6, #10B981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .nav-links { display: flex; gap: 32px; list-style: none; }
+        .nav-links a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover { color: #8B5CF6; }
+        .nav-btn {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #8B5CF6, #EC4899);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Animations */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s ease-out;
+        }
+        .fade-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-content h1 { font-size: 2.5rem; }
+            .tools-section, .capabilities-section, .cta-section { padding: 80px 20px; }
+            .section-title { font-size: 2rem; }
+            .nav { padding: 15px 20px; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Nav -->
+    <nav class="nav" id="nav">
+        <div class="nav-logo">AI 星云纪</div>
+        <ul class="nav-links">
+            <li><a href="#tools">AI 工具</a></li>
+            <li><a href="#capabilities">核心能力</a></li>
+            <li><a href="#about">关于</a></li>
+        </ul>
+        <button class="nav-btn">开始探索</button>
+    </nav>
+
+    <!-- Cosmic Hero -->
+    <section class="cosmic-hero" id="hero">
+        <canvas id="cosmicCanvas"></canvas>
+        <div class="hero-content" id="heroContent">
+            <h1>AI 星云纪</h1>
+            <p class="subtitle">生成式智能的动态宇宙漫游</p>
+            <p class="hint">点击任意处开始探索 · 滚动查看 AI 工具</p>
+        </div>
+        <div class="scroll-indicator" onclick="document.getElementById('tools').scrollIntoView({behavior:'smooth'})">
+            <span>↓</span>
+            <span>向下滚动</span>
+        </div>
+    </section>
+
+    <!-- Tools Section -->
+    <section class="tools-section" id="tools">
+        <div class="section-badge">🛠️ AI 工具集</div>
+        <h2 class="section-title">探索前沿 AI 能力</h2>
+        <p class="section-desc">从大语言模型到多模态生成，覆盖你工作中的每一个场景</p>
+
+        <div class="tools-grid" id="toolsGrid">
+            <!-- Tools will be injected by JS -->
+        </div>
+    </section>
+
+    <!-- Capabilities -->
+    <section class="capabilities-section" id="capabilities">
+        <div style="text-align:center;">
+            <div class="section-badge">✨ 核心能力</div>
+            <h2 class="section-title">为什么选择我们的 AI 工具</h2>
+        </div>
+        <div class="cap-grid">
+            <div class="cap-card fade-up">
+                <div class="cap-icon">⚡</div>
+                <div class="cap-title">极速响应</div>
+                <div class="cap-desc">平均延迟低于 200ms，实时交互无等待</div>
+            </div>
+            <div class="cap-card fade-up">
+                <div class="cap-icon">🔒</div>
+                <div class="cap-title">隐私安全</div>
+                <div class="cap-desc">端到端加密，数据不留存，企业级安全保障</div>
+            </div>
+            <div class="cap-card fade-up">
+                <div class="cap-icon">🔗</div>
+                <div class="cap-title">无缝集成</div>
+                <div class="cap-desc">API/SDK 完善，一行代码接入现有系统</div>
+            </div>
+            <div class="cap-card fade-up">
+                <div class="cap-icon">🎯</div>
+                <div class="cap-title">精准可控</div>
+                <div class="cap-desc">细粒度参数调节，输出稳定可复现</div>
+            </div>
+            <div class="cap-card fade-up">
+                <div class="cap-icon">🌍</div>
+                <div class="cap-title">多语言支持</div>
+                <div class="cap-desc">覆盖 100+ 语言，跨语言沟通无障碍</div>
+            </div>
+            <div class="cap-card fade-up">
+                <div class="cap-icon">♾️</div>
+                <div class="cap-title">无限可能</div>
+                <div class="cap-desc">持续更新迭代，每周上新功能</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <h2>准备好进入 AI 星云了吗？</h2>
+        <p>无论是创作、分析还是开发，我们的 AI 工具都能助你一臂之力</p>
+        <div class="cta-btns">
+            <button class="btn btn-primary">免费开始使用 →</button>
+            <button class="btn btn-secondary">预约演示</button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2024 AI 星云纪 | 探索生成式智能的无限可能</p>
+    </footer>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <button class="modal-close" onclick="closeModal()">×</button>
+            <div class="modal-header">
+                <div class="modal-icon" id="mIcon">🤖</div>
+                <div>
+                    <div class="modal-title" id="mTitle">工具名称</div>
+                    <div class="modal-category" id="mCategory">分类</div>
+                </div>
+            </div>
+            <p class="modal-desc" id="mDesc">描述内容</p>
+            <ul class="modal-features" id="mFeatures"></ul>
+            <button class="modal-btn" id="mBtn">立即体验</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/three@0.150.1/build/three.min.js"></script>
+    <script>
+        // ==================== THREE.JS COSMIC BACKGROUND ====================
+        const canvas = document.getElementById('cosmicCanvas');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        const scene = new THREE.Scene();
+        const cam = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        cam.position.z = 60;
+
+        // Stars
+        const starGeo = new THREE.BufferGeometry();
+        const starCount = 2500;
+        const starPos = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount * 3; i++) starPos[i] = (Math.random() - 0.5) * 600;
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, transparent: true, opacity: 0.8 });
+        scene.add(new THREE.Points(starGeo, starMat));
+
+        // Nodes
+        const nodes = [];
+        const nodeData = [
+            { name: 'GPT-4', params: '1.8T', data: '45TB', pos: [0, 0, 0], size: 2.2, col: 0x8B5CF6 },
+            { name: 'Claude 3', params: '2T', data: '52TB', pos: [18, 8, -5], size: 2, col: 0x10B981 },
+            { name: 'Gemini', params: '1.5T', data: '38TB', pos: [-14, 14, 5], size: 1.8, col: 0xEC4899 },
+            { name: 'Llama 3', params: '70B', data: '15TB', pos: [22, -6, 10], size: 1.2, col: 0xF59E0B },
+            { name: 'Mistral', params: '45B', data: '8TB', pos: [-18, -10, -12], size: 1, col: 0x06B6D4 },
+            { name: 'DALL-E', params: '3.5B', data: '6TB', pos: [6, 18, -8], size: 1.4, col: 0xF472B6 }
+        ];
+        nodeData.forEach((info, i) => {
+            const geo = new THREE.SphereGeometry(info.size, 20, 20);
+            const mat = new THREE.MeshPhongMaterial({ color: info.col, emissive: info.col, emissiveIntensity: 0.3 });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(...info.pos);
+            mesh.userData = { ...info, baseY: info.pos[1] };
+            const rGeo = new THREE.RingGeometry(info.size * 1.5, info.size * 1.8, 32);
+            const rMat = new THREE.MeshBasicMaterial({ color: info.col, side: THREE.DoubleSide, transparent: true, opacity: 0.25 });
+            const ring = new THREE.Mesh(rGeo, rMat);
+            ring.position.copy(mesh.position);
+            ring.lookAt(cam.position);
+            mesh.userData.ring = ring;
+            scene.add(mesh);
+            scene.add(ring);
+            nodes.push(mesh);
+        });
+
+        // Connections
+        const connections = [];
+        for (let i = 0; i < nodes.length - 1; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+                if (nodes[i].position.distanceTo(nodes[j].position) < 45) {
+                    const p = [nodes[i].position.clone(), nodes[j].position.clone()];
+                    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(p), new THREE.LineBasicMaterial({ color: 0x8B5CF6, transparent: true, opacity: 0.2 }));
+                    scene.add(line);
+                    connections.push(line);
+                }
+            }
+        }
+
+        // Nebula
+        const nebGeo = new THREE.BufferGeometry();
+        const nebCount = 800;
+        const nebPos = new Float32Array(nebCount * 3);
+        for (let i = 0; i < nebCount * 3; i++) nebPos[i] = (Math.random() - 0.5) * 100;
+        nebGeo.setAttribute('position', new THREE.BufferAttribute(nebPos, 3));
+        scene.add(new THREE.Points(nebGeo, new THREE.PointsMaterial({ size: 0.4, color: 0x8B5CF6, transparent: true, opacity: 0.4 })));
+
+        // Interaction
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let firstClick = true;
+        document.addEventListener('click', e => {
+            if (firstClick && e.target.closest('.cosmic-hero')) {
+                document.getElementById('heroContent').classList.add('hidden');
+                firstClick = false;
+            }
+            if (!e.target.closest('.cosmic-hero')) return;
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, cam);
+            const hits = raycaster.intersectObjects(nodes);
+            if (hits.length > 0) {
+                hits[0].object.userData.selected = true;
+                setTimeout(() => hits[0].object.userData.selected = false, 300);
+            }
+        });
+
+        // Camera
+        let dragging = false, pX = 0, pY = 0, aX = 0, aY = 0, dist = 60;
+        document.addEventListener('mousedown', e => { if (e.target.closest('.cosmic-hero')) { dragging = true; pX = e.clientX; pY = e.clientY; } });
+        document.addEventListener('mouseup', () => dragging = false);
+        document.addEventListener('mousemove', e => {
+            if (!dragging) return;
+            aX += (e.clientX - pX) * 0.005;
+            aY += (e.clientY - pY) * 0.005;
+            aY = Math.max(-1.5, Math.min(1.5, aY));
+            pX = e.clientX; pY = e.clientY;
+        });
+        document.addEventListener('wheel', e => { dist += e.deltaY * 0.05; dist = Math.max(25, Math.min(150, dist)); });
+
+        window.addEventListener('resize', () => {
+            cam.aspect = window.innerWidth / window.innerHeight;
+            cam.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Loop
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const t = clock.getElapsedTime();
+
+            cam.position.x = Math.sin(aX) * dist;
+            cam.position.z = Math.cos(aX) * dist;
+            cam.position.y = aY * 40;
+            cam.lookAt(0, 0, 0);
+
+            scene.children[0].rotation.y += 0.0001;
+
+            nodes.forEach((n, i) => {
+                n.position.y = n.userData.baseY + Math.sin(t * 0.5 + i) * 2;
+                n.rotation.y += 0.008;
+                n.userData.ring.position.copy(n.position);
+                n.userData.ring.lookAt(cam.position);
+                const scale = n.userData.selected ? 1.5 : 1;
+                n.scale.lerp(new THREE.Vector3(scale, scale, scale), 0.1);
+            });
+
+            connections.forEach((c, i) => c.material.opacity = 0.15 + Math.sin(t * 2 + i * 0.5) * 0.1);
+            scene.children[3].rotation.y += 0.0002;
+
+            renderer.render(scene, cam);
+        }
+        animate();
+
+        // Nav scroll
+        window.addEventListener('scroll', () => {
+            document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 50);
+        });
+
+        // ==================== TOOLS DATA ====================
+        const toolsData = [
+            {
+                icon: '🤖', name: 'AI 对话助手', category: '大语言模型', desc: '基于最新 GPT-4 / Claude 3 模型，支持多轮对话、代码生成、文档撰写等复杂任务。',
+                features: ['多模型切换', '上下文记忆', '代码解释', '思维链推理', '文件解析'],
+                tags: ['ChatGPT', 'Claude', 'Gemini'], accent1: '#8B5CF6', accent2: '#EC4899'
+            },
+            {
+                icon: '🎨', name: 'AI 图像生成', category: '多模态生成', desc: '一句话生成专业级图片，支持风格迁移、局部重绘、图像扩展等多种创作模式。',
+                features: ['文生图', '图生图', '风格控制', '4K 超分', '批量生成'],
+                tags: ['Midjourney', 'DALL-E', 'Stable Diffusion'], accent1: '#F472B6', accent2: '#EC4899'
+            },
+            {
+                icon: '✍️', name: 'AI 写作助手', category: '内容创作', desc: '智能续写、润色、改写，适配营销文案、学术论文、社交媒体等多种场景。',
+                features: ['智能续写', '多语气切换', '语法检查', 'SEO 优化', '多语言翻译'],
+                tags: ['GPT Writer', 'Jasper', 'Copy.ai'], accent1: '#10B981', accent2: '#06B6D4'
+            },
+            {
+                icon: '📊', name: 'AI 数据分析', category: '商业智能', desc: '上传数据文件，AI 自动识别数据类型，生成可视化图表和洞察报告。',
+                features: ['自然语言查询', '自动建模', '图表生成', '趋势预测', '一键导出'],
+                tags: ['Tableau GPT', 'Power BI AI'], accent1: '#F59E0B', accent2: '#EF4444'
+            },
+            {
+                icon: '🎵', name: 'AI 音乐创作', category: '音频生成', desc: '输入描述或参考旋律，生成原创音乐作品，支持多种风格和乐器。',
+                features: ['风格控制', ' BPM 调节', '乐器分离', '循环片段', '多轨道编辑'],
+                tags: ['Suno', 'AIVA', 'Boomy'], accent1: '#8B5CF6', accent2: '#10B981'
+            },
+            {
+                icon: '📝', name: 'AI 会议纪要', category: '效率工具', desc: '自动转录会议内容，提取关键决策、待办事项，生成结构化纪要。',
+                features: ['实时转录', '说话人识别', '要点提取', '待办追踪', '多语言支持'],
+                tags: ['Fireflies', 'Otter', 'Meetgeek'], accent1: '#06B6D4', accent2: '#3B82F6'
+            },
+            {
+                icon: '🧠', name: 'AI 知识库', category: '企业知识管理', desc: '构建企业私有知识库，支持文档问答、语义搜索、报告自动生成。',
+                features: ['RAG 检索增强', '文档向量化', '权限控制', '多格式支持', 'API 集成'],
+                tags: ['Notion AI', 'Confluence AI'], accent1: '#8B5CF6', accent2: '#6366F1'
+            },
+            {
+                icon: '🎬', name: 'AI 视频剪辑', category: '内容生产', desc: '输入文案自动生成视频，支持数字人、字幕、配音一站式完成。',
+                features: ['文生视频', '数字人', '自动配音', '智能剪辑', '多平台适配'],
+                tags: ['HeyGen', 'Runway', 'Pika'], accent1: '#EC4899', accent2: '#F472B6'
+            },
+            {
+                icon: '🔧', name: 'AI 代码助手', category: '开发工具', desc: '实时代码补全、Bug 修复、代码审查，支持 50+ 编程语言。',
+                features: ['行级补全', 'Bug 解释', '单元测试生成', '代码重构', 'Git 集成'],
+                tags: ['GitHub Copilot', 'Cursor', 'Codeium'], accent1: '#10B981', accent2: '#059669'
+            }
+        ];
+
+        // Render tools
+        const grid = document.getElementById('toolsGrid');
+        toolsData.forEach((tool, i) => {
+            const card = document.createElement('div');
+            card.className = 'tool-card fade-up';
+            card.style.setProperty('--accent1', tool.accent1);
+            card.style.setProperty('--accent2', tool.accent2);
+            card.style.animationDelay = `${i * 0.1}s`;
+            card.innerHTML = `
+                <div class="tool-hover-effect"></div>
+                <div class="tool-icon">${tool.icon}</div>
+                <div class="tool-category">${tool.category}</div>
+                <div class="tool-name">${tool.name}</div>
+                <div class="tool-desc">${tool.desc}</div>
+                <div class="tool-tags">${tool.tags.map(t => `<span class="tool-tag">${t}</span>`).join('')}</div>
+            `;
+            card.addEventListener('click', () => openModal(tool));
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                card.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
+                card.style.setProperty('--my', (e.clientY - rect.top) + 'px');
+            });
+            grid.appendChild(card);
+        });
+
+        // Modal
+        function openModal(tool) {
+            document.getElementById('mIcon').textContent = tool.icon;
+            document.getElementById('mTitle').textContent = tool.name;
+            document.getElementById('mCategory').textContent = tool.category;
+            document.getElementById('mDesc').textContent = tool.desc;
+            document.getElementById('mFeatures').innerHTML = tool.features.map(f => `<li>${f}</li>`).join('');
+            document.querySelector('.modal').style.setProperty('--maccent1', tool.accent1);
+            document.querySelector('.modal').style.setProperty('--maccent2', tool.accent2);
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+        }
+        document.getElementById('modalOverlay').addEventListener('click', e => {
+            if (e.target === document.getElementById('modalOverlay')) closeModal();
+        });
+
+        // Scroll animations
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>

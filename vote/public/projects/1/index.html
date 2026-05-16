@@ -1,0 +1,2811 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智能工作台 | Intelligent Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6366F1;
+      --primary-light: #818CF8;
+      --secondary: #8B5CF6;
+      --accent: #10B981;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --bg: #F8FAFC;
+      --card: #FFFFFF;
+      --text: #1E293B;
+      --text-secondary: #64748B;
+      --border: #E2E8F0;
+      --shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.1);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+      --radius: 12px;
+      --radius-lg: 16px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans SC', 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+      z-index: 100;
+    }
+
+    .logo {
+      padding: 24px 20px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+
+    .logo h1 {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1rem;
+    }
+
+    .nav {
+      flex: 1;
+      padding: 16px 12px;
+      overflow-y: auto;
+    }
+
+    .nav-section {
+      margin-bottom: 24px;
+    }
+
+    .nav-section-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0 8px;
+      margin-bottom: 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+    }
+
+    .nav-item:hover {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1));
+      color: var(--primary);
+      border-left: 3px solid var(--primary);
+      margin-left: -3px;
+    }
+
+    .nav-item svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      background: var(--primary);
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .user-profile {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .user-info {
+      flex: 1;
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .user-role {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* Main Content */
+    .main {
+      flex: 1;
+      margin-left: 260px;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .page-title-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .back-btn:hover {
+      background: var(--bg);
+    }
+
+    .back-btn svg {
+      width: 18px;
+      height: 18px;
+      color: var(--text-secondary);
+    }
+
+    .page-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .page-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg);
+      padding: 10px 16px;
+      border-radius: 10px;
+      width: 280px;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .search-box:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+    }
+
+    .search-box input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 0.9rem;
+      width: 100%;
+      font-family: inherit;
+    }
+
+    .search-box input::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: none;
+      background: var(--bg);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .header-btn:hover {
+      background: var(--border);
+    }
+
+    .header-btn svg {
+      width: 20px;
+      height: 20px;
+      color: var(--text-secondary);
+    }
+
+    .notification-dot {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 8px;
+      height: 8px;
+      background: var(--danger);
+      border-radius: 50%;
+      border: 2px solid var(--card);
+    }
+
+    /* Page Content */
+    .content {
+      padding: 32px;
+    }
+
+    /* View transitions */
+    .view {
+      display: none;
+      opacity: 0;
+      animation: fadeIn 0.3s ease-out forwards;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Dashboard */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      transition: all 0.2s ease-out;
+      cursor: pointer;
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title svg {
+      width: 18px;
+      height: 18px;
+      color: var(--primary);
+    }
+
+    .card-action {
+      font-size: 0.8rem;
+      color: var(--primary);
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .card-action:hover {
+      text-decoration: underline;
+    }
+
+    /* Task Card */
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg);
+      border-radius: 10px;
+      transition: all 0.2s;
+    }
+
+    .task-item:hover {
+      background: var(--border);
+    }
+
+    .task-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+      transition: all 0.2s;
+    }
+
+    .task-checkbox:hover {
+      border-color: var(--primary);
+    }
+
+    .task-checkbox.checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .task-checkbox.checked::after {
+      content: '✓';
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .task-content {
+      flex: 1;
+    }
+
+    .task-title {
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .task-item.completed .task-title {
+      text-decoration: line-through;
+      color: var(--text-secondary);
+    }
+
+    .task-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .priority-badge {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 600;
+    }
+
+    .priority-p0 { background: #FEE2E2; color: #DC2626; }
+    .priority-p1 { background: #FEF3C7; color: #D97706; }
+    .priority-p2 { background: #E0E7FF; color: #4F46E5; }
+
+    .due-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Metric Card */
+    .metric-value {
+      font-family: 'Inter', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .metric-trend {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+
+    .metric-trend.up { color: var(--accent); }
+    .metric-trend.down { color: var(--danger); }
+
+    .metric-chart {
+      margin-top: 16px;
+      height: 60px;
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
+    .chart-bar {
+      flex: 1;
+      background: linear-gradient(to top, var(--primary), var(--primary-light));
+      border-radius: 4px 4px 0 0;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .chart-bar:hover {
+      opacity: 1;
+    }
+
+    /* Requirement Card */
+    .requirement-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .requirement-item {
+      padding: 14px;
+      background: var(--bg);
+      border-radius: 10px;
+      transition: all 0.2s;
+    }
+
+    .requirement-item:hover {
+      background: var(--border);
+    }
+
+    .req-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .req-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      flex: 1;
+    }
+
+    .req-votes {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .req-votes svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .req-desc {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .req-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .req-requester {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .req-avatar {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.6rem;
+      font-weight: 600;
+    }
+
+    .status-tag {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+
+    .status-pending { background: #FEF3C7; color: #D97706; }
+    .status-scheduled { background: #DBEAFE; color: #2563EB; }
+    .status-progress { background: #E0E7FF; color: #4F46E5; }
+    .status-done { background: #D1FAE5; color: #059669; }
+
+    /* Project Progress Card */
+    .project-item {
+      margin-bottom: 16px;
+    }
+
+    .project-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .project-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .project-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .project-percent {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: var(--bg);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      border-radius: 4px;
+    }
+
+    .project-meta {
+      display: flex;
+      gap: 16px;
+      margin-top: 8px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* Tools Card */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .tool-item {
+      padding: 16px;
+      background: var(--bg);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid transparent;
+    }
+
+    .tool-item:hover {
+      border-color: var(--primary);
+      background: rgba(99,102,241,0.05);
+    }
+
+    .tool-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .tool-icon.ai { background: linear-gradient(135deg, #6366F1, #8B5CF6); }
+    .tool-icon.doc { background: linear-gradient(135deg, #10B981, #059669); }
+    .tool-icon.data { background: linear-gradient(135deg, #F59E0B, #D97706); }
+    .tool-icon.ux { background: linear-gradient(135deg, #EC4899, #DB2777); }
+
+    .tool-name {
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    /* Activity Feed */
+    .activity-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 12px;
+    }
+
+    .activity-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .activity-content {
+      flex: 1;
+    }
+
+    .activity-text {
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    .activity-text strong {
+      font-weight: 600;
+    }
+
+    .activity-time {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* Document List */
+    .doc-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .doc-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      background: var(--bg);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .doc-item:hover {
+      background: var(--border);
+    }
+
+    .doc-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+
+    .doc-info {
+      flex: 1;
+    }
+
+    .doc-name {
+      font-weight: 500;
+      font-size: 0.85rem;
+    }
+
+    .doc-meta {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .doc-type {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      padding: 4px 8px;
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    /* ========== DETAIL VIEWS ========== */
+
+    /* Section Headers */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .breadcrumb span {
+      color: var(--primary);
+      cursor: pointer;
+    }
+
+    .breadcrumb span:hover {
+      text-decoration: underline;
+    }
+
+    /* Requirements Detail View */
+    .req-filters {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--primary);
+    }
+
+    .filter-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .req-table {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .req-table-header {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr 80px;
+      gap: 16px;
+      padding: 16px 24px;
+      background: var(--bg);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .req-table-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr 80px;
+      gap: 16px;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .req-table-row:hover {
+      background: var(--bg);
+    }
+
+    .req-table-row:last-child {
+      border-bottom: none;
+    }
+
+    .req-table-title {
+      font-weight: 500;
+    }
+
+    .req-table-desc {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .req-table-priority {
+      font-size: 0.75rem;
+    }
+
+    .req-table-votes {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .vote-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-family: inherit;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .vote-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* Data Analysis Detail View */
+    .data-header {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+
+    .data-metric-card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .data-metric-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .data-metric-value {
+      font-family: 'Inter', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .data-metric-trend {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.85rem;
+      margin-top: 8px;
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    .chart-card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+
+    .chart-card-title {
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .big-chart {
+      height: 200px;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      padding: 16px 0;
+    }
+
+    .big-chart .chart-bar {
+      flex: 1;
+      border-radius: 6px 6px 0 0;
+    }
+
+    .funnel-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 16px 0;
+    }
+
+    .funnel-step {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .funnel-bar {
+      height: 40px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 12px;
+      color: white;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: width 0.5s ease-out;
+    }
+
+    .funnel-label {
+      width: 80px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* User Research Detail View */
+    .personas-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .persona-card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      text-align: center;
+    }
+
+    .persona-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+    }
+
+    .persona-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 4px;
+    }
+
+    .persona-type {
+      font-size: 0.85rem;
+      color: var(--primary);
+      margin-bottom: 16px;
+    }
+
+    .persona-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .persona-tag {
+      padding: 4px 12px;
+      background: var(--bg);
+      border-radius: 20px;
+      font-size: 0.75rem;
+    }
+
+    .interviews-list {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .interview-item {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .interview-item:hover {
+      background: var(--bg);
+    }
+
+    .interview-item:last-child {
+      border-bottom: none;
+    }
+
+    .interview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .interview-title {
+      font-weight: 600;
+    }
+
+    .interview-date {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .interview-summary {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Project Schedule Detail View */
+    .kanban-board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+
+    .kanban-column {
+      background: var(--bg);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+    }
+
+    .kanban-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding: 0 4px;
+    }
+
+    .kanban-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .kanban-count {
+      background: var(--border);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+    }
+
+    .kanban-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 200px;
+    }
+
+    .kanban-card {
+      background: var(--card);
+      border-radius: 10px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .kanban-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .kanban-card-title {
+      font-weight: 500;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+
+    .kanban-card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .kanban-card-assignee {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .kanban-avatar {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.6rem;
+      font-weight: 600;
+    }
+
+    /* AI Assistant View */
+    .ai-chat-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 200px);
+      min-height: 500px;
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+    }
+
+    .ai-messages {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .ai-message {
+      display: flex;
+      gap: 12px;
+      max-width: 80%;
+    }
+
+    .ai-message.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .ai-message-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .ai-message.ai .ai-message-avatar {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+    }
+
+    .ai-message.user .ai-message-avatar {
+      background: var(--bg);
+    }
+
+    .ai-message-content {
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .ai-message.ai .ai-message-content {
+      background: var(--bg);
+    }
+
+    .ai-message.user .ai-message-content {
+      background: var(--primary);
+      color: white;
+    }
+
+    .ai-quick-prompts {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .ai-prompt-btn {
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .ai-prompt-btn:hover {
+      border-color: var(--primary);
+      background: rgba(99,102,241,0.05);
+    }
+
+    .ai-input-area {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+    }
+
+    .ai-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .ai-input:focus {
+      border-color: var(--primary);
+    }
+
+    .ai-send-btn {
+      padding: 12px 24px;
+      border-radius: 10px;
+      border: none;
+      background: var(--primary);
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .ai-send-btn:hover {
+      background: var(--primary-light);
+    }
+
+    /* Documents View */
+    .doc-category-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+    }
+
+    .doc-tab {
+      padding: 8px 20px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .doc-tab:hover {
+      color: var(--text);
+    }
+
+    .doc-tab.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .docs-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .docs-card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .docs-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .docs-card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+    }
+
+    .docs-card-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .docs-card-meta {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .docs-card-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .docs-card-tag {
+      padding: 4px 10px;
+      background: var(--bg);
+      border-radius: 4px;
+      font-size: 0.7rem;
+    }
+
+    /* FAB Button */
+    .fab {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-lg);
+      transition: all 0.2s;
+      z-index: 100;
+    }
+
+    .fab:hover {
+      transform: scale(1.05);
+      box-shadow: 0 20px 25px -5px rgba(99,102,241,0.3);
+    }
+
+    .fab svg {
+      width: 24px;
+      height: 24px;
+      color: white;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      width: 90%;
+      max-width: 500px;
+      padding: 32px;
+      transform: scale(0.95);
+      transition: transform 0.2s;
+    }
+
+    .modal-overlay.active .modal {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: none;
+      background: var(--bg);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+      background: var(--border);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      transition: all 0.2s;
+      background: var(--card);
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    .btn-secondary {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+      .kanban-board {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .personas-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .docs-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .main {
+        margin-left: 0;
+      }
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo" onclick="navigateTo('dashboard')">
+      <h1>
+        <span class="logo-icon">⚡</span>
+        智能工作台
+      </h1>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-section">
+        <div class="nav-section-title">工作台</div>
+        <button class="nav-item active" data-view="dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          仪表盘
+        </button>
+        <button class="nav-item" data-view="requirements">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6m-6 4h6"/></svg>
+          需求管理
+        </button>
+        <button class="nav-item" data-view="data">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10m0 0l-4 4m4-4l4 4"/><path d="M4 20V4h16v16"/></svg>
+          数据分析
+        </button>
+        <button class="nav-item" data-view="users">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75"/></svg>
+          用户研究
+        </button>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">项目</div>
+        <button class="nav-item" data-view="documents">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+          产品文档
+          <span class="nav-badge">3</span>
+        </button>
+        <button class="nav-item" data-view="schedule">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          项目排期
+        </button>
+        <button class="nav-item" data-view="competitors">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          竞品分析
+        </button>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">工具</div>
+        <button class="nav-item" data-view="ai">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m11-7h-6m-6 0H1m15.5-7.5L14 7m-4 4l-2 2m6 6l-2 2m0-10l2 2m-6 6l2 2"/></svg>
+          AI 助手
+        </button>
+        <button class="nav-item" data-view="personas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2m-9.4-4.6a5 5 0 017 0"/></svg>
+          用户画像
+        </button>
+      </div>
+    </nav>
+
+    <div class="user-profile">
+      <div class="avatar">李</div>
+      <div class="user-info">
+        <div class="user-name">李明</div>
+        <div class="user-role">高级产品经理</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main">
+    <header class="header">
+      <div class="page-title-section">
+        <button class="back-btn" id="backBtn" onclick="goBack()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div>
+          <h1 class="page-title" id="pageTitle">仪表盘</h1>
+          <p class="page-subtitle" id="pageSubtitle">下午好，李明。今日共有 5 项待办，3 个需求待评审。</p>
+        </div>
+      </div>
+      <div class="search-box">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" placeholder="搜索需求、文档、数据...">
+      </div>
+      <div class="header-actions">
+        <button class="header-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <span class="notification-dot"></span>
+        </button>
+        <button class="header-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- ========== DASHBOARD VIEW ========== -->
+      <div class="view active" id="view-dashboard">
+        <div class="dashboard-grid">
+          <!-- Today's Tasks -->
+          <div class="card" onclick="navigateTo('requirements')">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                今日待办
+              </div>
+              <span class="card-action" onclick="event.stopPropagation(); openModal()">+ 添加</span>
+            </div>
+            <div class="task-list">
+              <div class="task-item">
+                <div class="task-checkbox" onclick="event.stopPropagation(); toggleTask(this)"></div>
+                <div class="task-content">
+                  <div class="task-title">完成用户增长方案 PRD</div>
+                  <div class="task-meta">
+                    <span class="priority-badge priority-p0">P0</span>
+                    <span class="due-badge">📅 今天 18:00</span>
+                  </div>
+                </div>
+              </div>
+              <div class="task-item">
+                <div class="task-checkbox" onclick="event.stopPropagation(); toggleTask(this)"></div>
+                <div class="task-content">
+                  <div class="task-title">审核新功能设计方案</div>
+                  <div class="task-meta">
+                    <span class="priority-badge priority-p1">P1</span>
+                    <span class="due-badge">📅 明天 10:00</span>
+                  </div>
+                </div>
+              </div>
+              <div class="task-item completed">
+                <div class="task-checkbox checked" onclick="event.stopPropagation(); toggleTask(this)"></div>
+                <div class="task-content">
+                  <div class="task-title">周会同步产品进度</div>
+                  <div class="task-meta">
+                    <span class="priority-badge priority-p2">P2</span>
+                    <span class="due-badge">✓ 已完成</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DAU Metric -->
+          <div class="card" onclick="navigateTo('data')">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75"/></svg>
+                日活跃用户
+              </div>
+            </div>
+            <div class="metric-value">128.6万</div>
+            <div class="metric-trend up">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              +12.3% 较上周
+            </div>
+            <div class="metric-chart">
+              <div class="chart-bar" style="height: 40%"></div>
+              <div class="chart-bar" style="height: 55%"></div>
+              <div class="chart-bar" style="height: 45%"></div>
+              <div class="chart-bar" style="height: 70%"></div>
+              <div class="chart-bar" style="height: 65%"></div>
+              <div class="chart-bar" style="height: 80%"></div>
+              <div class="chart-bar" style="height: 100%"></div>
+            </div>
+          </div>
+
+          <!-- Requirement Pool -->
+          <div class="card" onclick="navigateTo('requirements')">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                需求池
+              </div>
+              <span class="card-action">查看全部</span>
+            </div>
+            <div class="requirement-list">
+              <div class="requirement-item">
+                <div class="req-header">
+                  <span class="req-title">支持深色模式</span>
+                  <span class="req-votes">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3zM7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>
+                    89
+                  </span>
+                </div>
+                <div class="req-desc">用户反馈希望在夜间使用时开启深色主题...</div>
+                <div class="req-footer">
+                  <span class="req-requester"><span class="req-avatar">张</span> 张伟 · 3天前</span>
+                  <span class="status-tag status-pending">待评估</span>
+                </div>
+              </div>
+              <div class="requirement-item">
+                <div class="req-header">
+                  <span class="req-title">首页加载速度优化</span>
+                  <span class="req-votes">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3zM7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>
+                    156
+                  </span>
+                </div>
+                <div class="req-desc">首屏加载超过 3 秒，用户流失率明显上升...</div>
+                <div class="req-footer">
+                  <span class="req-requester"><span class="req-avatar">王</span> 王芳 · 1天前</span>
+                  <span class="status-tag status-scheduled">已排期</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Project Progress -->
+          <div class="card" onclick="navigateTo('schedule')">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                项目进度
+              </div>
+              <span class="card-action">Sprint 23</span>
+            </div>
+            <div class="project-item">
+              <div class="project-header">
+                <span class="project-name">用户增长 2.0</span>
+                <span class="project-percent">68%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 68%"></div>
+              </div>
+              <div class="project-meta">
+                <span>👥 5 人</span>
+                <span>📅 剩余 5 天</span>
+              </div>
+            </div>
+            <div class="project-item">
+              <div class="project-header">
+                <span class="project-name">支付优化</span>
+                <span class="project-percent">92%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 92%"></div>
+              </div>
+              <div class="project-meta">
+                <span>👥 3 人</span>
+                <span>📅 剩余 2 天</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Tools -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                快捷工具
+              </div>
+            </div>
+            <div class="tools-grid">
+              <div class="tool-item" onclick="navigateTo('ai')">
+                <div class="tool-icon ai">🤖</div>
+                <span class="tool-name">AI 助手</span>
+              </div>
+              <div class="tool-item" onclick="navigateTo('personas')">
+                <div class="tool-icon ux">👤</div>
+                <span class="tool-name">用户画像</span>
+              </div>
+              <div class="tool-item" onclick="navigateTo('data')">
+                <div class="tool-icon data">📊</div>
+                <span class="tool-name">数据看板</span>
+              </div>
+              <div class="tool-item" onclick="navigateTo('documents')">
+                <div class="tool-icon doc">✏️</div>
+                <span class="tool-name">产品文档</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Documents -->
+          <div class="card" onclick="navigateTo('documents')">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                最近文档
+              </div>
+              <span class="card-action">全部</span>
+            </div>
+            <div class="doc-list">
+              <div class="doc-item">
+                <div class="doc-icon">📄</div>
+                <div class="doc-info">
+                  <div class="doc-name">用户增长方案 PRD v3.2</div>
+                  <div class="doc-meta">2 小时前 · 李明</div>
+                </div>
+                <span class="doc-type">PRD</span>
+              </div>
+              <div class="doc-item">
+                <div class="doc-icon">📊</div>
+                <div class="doc-info">
+                  <div class="doc-name">Q1 数据分析报告</div>
+                  <div class="doc-meta">昨天 15:30 · 李明</div>
+                </div>
+                <span class="doc-type">Excel</span>
+              </div>
+              <div class="doc-item">
+                <div class="doc-icon">🎨</div>
+                <div class="doc-info">
+                  <div class="doc-name">首页改版设计方案</div>
+                  <div class="doc-meta">3 天前 · 张伟</div>
+                </div>
+                <span class="doc-type">Figma</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Team Activity -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                团队动态
+              </div>
+            </div>
+            <div class="activity-list">
+              <div class="activity-item">
+                <div class="activity-avatar" style="background: linear-gradient(135deg, #10B981, #059669)">王</div>
+                <div class="activity-content">
+                  <div class="activity-text"><strong>王芳</strong> 完成了「支付流程优化」的需求评审</div>
+                  <div class="activity-time">15 分钟前</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-avatar" style="background: linear-gradient(135deg, #F59E0B, #D97706)">张</div>
+                <div class="activity-content">
+                  <div class="activity-text"><strong>张伟</strong> 提交了新的设计稿到「首页改版」项目</div>
+                  <div class="activity-time">1 小时前</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-avatar" style="background: linear-gradient(135deg, #EC4899, #DB2777)">陈</div>
+                <div class="activity-content">
+                  <div class="activity-text"><strong>陈静</strong> 更新了「用户访谈」的研究报告</div>
+                  <div class="activity-time">3 小时前</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Revenue Metric -->
+          <div class="card" onclick="navigateTo('data')">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                月收入
+              </div>
+            </div>
+            <div class="metric-value">¥ 847.2万</div>
+            <div class="metric-trend up">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              +8.7% 较上月
+            </div>
+            <div class="metric-chart">
+              <div class="chart-bar" style="height: 60%"></div>
+              <div class="chart-bar" style="height: 75%"></div>
+              <div class="chart-bar" style="height: 55%"></div>
+              <div class="chart-bar" style="height: 85%"></div>
+              <div class="chart-bar" style="height: 70%"></div>
+              <div class="chart-bar" style="height: 90%"></div>
+              <div class="chart-bar" style="height: 95%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== REQUIREMENTS VIEW ========== -->
+      <div class="view" id="view-requirements">
+        <div class="section-header">
+          <div>
+            <div class="breadcrumb"><span onclick="navigateTo('dashboard')">仪表盘</span> / 需求管理</div>
+            <h2>需求管理</h2>
+          </div>
+          <button class="btn btn-primary" onclick="openModal()">+ 新建需求</button>
+        </div>
+
+        <div class="req-filters">
+          <button class="filter-btn active">全部 (24)</button>
+          <button class="filter-btn">待评估 (8)</button>
+          <button class="filter-btn">已排期 (6)</button>
+          <button class="filter-btn">进行中 (5)</button>
+          <button class="filter-btn">已完成 (5)</button>
+        </div>
+
+        <div class="req-table">
+          <div class="req-table-header">
+            <span>需求</span>
+            <span>优先级</span>
+            <span>投票</span>
+            <span>提出人</span>
+            <span>状态</span>
+            <span>操作</span>
+          </div>
+          <div class="req-table-row">
+            <div>
+              <div class="req-table-title">支持深色模式</div>
+              <div class="req-table-desc">用户反馈希望在夜间使用时开启深色主题...</div>
+            </div>
+            <span class="req-table-priority"><span class="priority-badge priority-p1">P1</span></span>
+            <span class="req-table-votes">89 票</span>
+            <span>张伟</span>
+            <span><span class="status-tag status-pending">待评估</span></span>
+            <span><button class="vote-btn">详情</button></span>
+          </div>
+          <div class="req-table-row">
+            <div>
+              <div class="req-table-title">首页加载速度优化</div>
+              <div class="req-table-desc">首屏加载超过 3 秒，用户流失率明显上升...</div>
+            </div>
+            <span class="req-table-priority"><span class="priority-badge priority-p0">P0</span></span>
+            <span class="req-table-votes">156 票</span>
+            <span>王芳</span>
+            <span><span class="status-tag status-scheduled">已排期</span></span>
+            <span><button class="vote-btn">详情</button></span>
+          </div>
+          <div class="req-table-row">
+            <div>
+              <div class="req-table-title">新增批量操作功能</div>
+              <div class="req-table-desc">用户需要同时处理多个任务，现无批量操作...</div>
+            </div>
+            <span class="req-table-priority"><span class="priority-badge priority-p1">P1</span></span>
+            <span class="req-table-votes">72 票</span>
+            <span>陈静</span>
+            <span><span class="status-progress">进行中</span></span>
+            <span><button class="vote-btn">详情</button></span>
+          </div>
+          <div class="req-table-row">
+            <div>
+              <div class="req-table-title">支持第三方登录</div>
+              <div class="req-table-desc">用户希望支持微信、Google账号快速登录...</div>
+            </div>
+            <span class="req-table-priority"><span class="priority-badge priority-p2">P2</span></span>
+            <span class="req-table-votes">45 票</span>
+            <span>李明</span>
+            <span><span class="status-tag status-done">已完成</span></span>
+            <span><button class="vote-btn">详情</button></span>
+          </div>
+          <div class="req-table-row">
+            <div>
+              <div class="req-table-title">数据导出功能</div>
+              <div class="req-table-desc">用户需要将数据导出为 Excel/PDF 格式...</div>
+            </div>
+            <span class="req-table-priority"><span class="priority-badge priority-p1">P1</span></span>
+            <span class="req-table-votes">93 票</span>
+            <span>周杰</span>
+            <span><span class="status-tag status-progress">进行中</span></span>
+            <span><button class="vote-btn">详情</button></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== DATA ANALYSIS VIEW ========== -->
+      <div class="view" id="view-data">
+        <div class="section-header">
+          <div>
+            <div class="breadcrumb"><span onclick="navigateTo('dashboard')">仪表盘</span> / 数据分析</div>
+            <h2>数据分析</h2>
+          </div>
+          <div style="display: flex; gap: 12px;">
+            <select class="form-select" style="width: 150px;">
+              <option>最近 7 天</option>
+              <option>最近 30 天</option>
+              <option>本月</option>
+            </select>
+            <button class="btn btn-secondary">导出报告</button>
+          </div>
+        </div>
+
+        <div class="data-header">
+          <div class="data-metric-card">
+            <div class="data-metric-label">日活跃用户 (DAU)</div>
+            <div class="data-metric-value">128.6万</div>
+            <div class="data-metric-trend up">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+              +12.3% ↑
+            </div>
+          </div>
+          <div class="data-metric-card">
+            <div class="data-metric-label">月活用户 (MAU)</div>
+            <div class="data-metric-value">892.4万</div>
+            <div class="data-metric-trend up">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+              +8.1% ↑
+            </div>
+          </div>
+          <div class="data-metric-card">
+            <div class="data-metric-label">次日留存率</div>
+            <div class="data-metric-value">47.8%</div>
+            <div class="data-metric-trend down">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/></svg>
+              -2.3% ↓
+            </div>
+          </div>
+          <div class="data-metric-card">
+            <div class="data-metric-label">月收入</div>
+            <div class="data-metric-value">¥847.2万</div>
+            <div class="data-metric-trend up">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+              +8.7% ↑
+            </div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-card-title">DAU 趋势</div>
+            <div class="big-chart">
+              <div class="chart-bar" style="height: 45%; background: linear-gradient(to top, #6366F1, #818CF8)"></div>
+              <div class="chart-bar" style="height: 52%; background: linear-gradient(to top, #6366F1, #818CF8)"></div>
+              <div class="chart-bar" style="height: 48%; background: linear-gradient(to top, #6366F1, #818CF8)"></div>
+              <div class="chart-bar" style="height: 65%; background: linear-gradient(to top, #6366F1, #818CF8)"></div>
+              <div class="chart-bar" style="height: 60%; background: linear-gradient(to top, #6366F1, #818CF8)"></div>
+              <div class="chart-bar" style="height: 78%; background: linear-gradient(to top, #6366F1, #818CF8)"></div>
+              <div class="chart-bar" style="height: 85%; background: linear-gradient(to top, #6366F1, #818CF8)"></div>
+              <div class="chart-bar" style="height: 72%; background: linear-gradient(to top, #6366F1, #818CF8)"></div>
+              <div class="chart-bar" style="height: 90%; background: linear-gradient(to top, #6366F1, #818CF8)"></div>
+              <div class="chart-bar" style="height: 88%; background: linear-gradient(to top, #6366F1, #818CF8)"></div>
+              <div class="chart-bar" style="height: 95%; background: linear-gradient(to top, #6366F1, #818CF8)"></div>
+              <div class="chart-bar" style="height: 100%; background: linear-gradient(to top, #6366F1, #818CF8)"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px;">
+              <span>3/16</span><span>3/19</span><span>3/22</span><span>3/25</span><span>3/26</span>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title">转化漏斗</div>
+            <div class="funnel-chart">
+              <div class="funnel-step">
+                <span class="funnel-label">访问</span>
+                <div class="funnel-bar" style="width: 100%">100,000</div>
+              </div>
+              <div class="funnel-step">
+                <span class="funnel-label">注册</span>
+                <div class="funnel-bar" style="width: 68%">68,000</div>
+              </div>
+              <div class="funnel-step">
+                <span class="funnel-label">激活</span>
+                <div class="funnel-bar" style="width: 45%">45,000</div>
+              </div>
+              <div class="funnel-step">
+                <span class="funnel-label">付费</span>
+                <div class="funnel-bar" style="width: 12%">12,000</div>
+              </div>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title">用户留存曲线</div>
+            <div class="big-chart">
+              <div class="chart-bar" style="height: 100%; background: linear-gradient(to top, #10B981, #34D399)"></div>
+              <div class="chart-bar" style="height: 48%; background: linear-gradient(to top, #10B981, #34D399)"></div>
+              <div class="chart-bar" style="height: 35%; background: linear-gradient(to top, #10B981, #34D399)"></div>
+              <div class="chart-bar" style="height: 28%; background: linear-gradient(to top, #10B981, #34D399)"></div>
+              <div class="chart-bar" style="height: 24%; background: linear-gradient(to top, #10B981, #34D399)"></div>
+              <div class="chart-bar" style="height: 20%; background: linear-gradient(to top, #10B981, #34D399)"></div>
+              <div class="chart-bar" style="height: 18%; background: linear-gradient(to top, #10B981, #34D399)"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px;">
+              <span>Day 1</span><span>Day 3</span><span>Day 7</span><span>Day 14</span><span>Day 30</span>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title">用户画像分布</div>
+            <div style="padding: 20px 0;">
+              <div style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px;">
+                  <span>18-24岁</span><span>32%</span>
+                </div>
+                <div style="height: 8px; background: var(--bg); border-radius: 4px;">
+                  <div style="height: 100%; width: 32%; background: linear-gradient(90deg, #6366F1, #8B5CF6); border-radius: 4px;"></div>
+                </div>
+              </div>
+              <div style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px;">
+                  <span>25-34岁</span><span>45%</span>
+                </div>
+                <div style="height: 8px; background: var(--bg); border-radius: 4px;">
+                  <div style="height: 100%; width: 45%; background: linear-gradient(90deg, #10B981, #34D399); border-radius: 4px;"></div>
+                </div>
+              </div>
+              <div style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px;">
+                  <span>35-44岁</span><span>18%</span>
+                </div>
+                <div style="height: 8px; background: var(--bg); border-radius: 4px;">
+                  <div style="height: 100%; width: 18%; background: linear-gradient(90deg, #F59E0B, #FBBF24); border-radius: 4px;"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px;">
+                  <span>45岁以上</span><span>5%</span>
+                </div>
+                <div style="height: 8px; background: var(--bg); border-radius: 4px;">
+                  <div style="height: 100%; width: 5%; background: linear-gradient(90deg, #EC4899, #F472B6); border-radius: 4px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== USER RESEARCH VIEW ========== -->
+      <div class="view" id="view-users">
+        <div class="section-header">
+          <div>
+            <div class="breadcrumb"><span onclick="navigateTo('dashboard')">仪表盘</span> / 用户研究</div>
+            <h2>用户研究</h2>
+          </div>
+          <button class="btn btn-primary">+ 新建访谈</button>
+        </div>
+
+        <div class="personas-grid">
+          <div class="persona-card">
+            <div class="persona-avatar" style="background: linear-gradient(135deg, #6366F1, #8B5CF6); color: white;">👩</div>
+            <div class="persona-name">都市年轻白领</div>
+            <div class="persona-type">核心用户</div>
+            <div class="persona-tags">
+              <span class="persona-tag">25-34岁</span>
+              <span class="persona-tag">高活跃</span>
+              <span class="persona-tag">付费意愿强</span>
+            </div>
+          </div>
+          <div class="persona-card">
+            <div class="persona-avatar" style="background: linear-gradient(135deg, #10B981, #059669); color: white;">👨</div>
+            <div class="persona-name">中小企业主</div>
+            <div class="persona-type">目标用户</div>
+            <div class="persona-tags">
+              <span class="persona-tag">35-44岁</span>
+              <span class="persona-tag">决策者</span>
+              <span class="persona-tag">追求效率</span>
+            </div>
+          </div>
+          <div class="persona-card">
+            <div class="persona-avatar" style="background: linear-gradient(135deg, #F59E0B, #D97706); color: white;">👴</div>
+            <div class="persona-name">传统行业从业者</div>
+            <div class="persona-type">潜在用户</div>
+            <div class="persona-tags">
+              <span class="persona-tag">45岁以上</span>
+              <span class="persona-tag">学习成本高</span>
+              <span class="persona-tag">需要培训</span>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="font-size: 1rem; margin-bottom: 16px;">用户访谈记录</h3>
+        <div class="interviews-list">
+          <div class="interview-item">
+            <div class="interview-header">
+              <span class="interview-title">关于首页改版的用户访谈</span>
+              <span class="interview-date">2026-03-20</span>
+            </div>
+            <div class="interview-summary">访谈了5位核心用户，普遍反映当前首页入口太深，建议增加快捷入口。3位用户提到希望能自定义首页模块...</div>
+          </div>
+          <div class="interview-item">
+            <div class="interview-header">
+              <span class="interview-title">付费用户深度访谈</span>
+              <span class="interview-date">2026-03-15</span>
+            </div>
+            <div class="interview-summary">针对月付费超过5000元的8位用户进行深度访谈，主要关注点是数据安全和服务响应速度，普遍对客服满意度较高...</div>
+          </div>
+          <div class="interview-item">
+            <div class="interview-header">
+              <span class="interview-title">流失用户调研</span>
+              <span class="interview-date">2026-03-10</span>
+            </div>
+            <div class="interview-summary">分析了近30天注销的200+用户，发现主要流失原因是：竞品替代(35%)、价格因素(28%)、功能不够用(22%)...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== PROJECT SCHEDULE VIEW ========== -->
+      <div class="view" id="view-schedule">
+        <div class="section-header">
+          <div>
+            <div class="breadcrumb"><span onclick="navigateTo('dashboard')">仪表盘</span> / 项目排期</div>
+            <h2>项目排期</h2>
+          </div>
+          <div style="display: flex; gap: 12px;">
+            <select class="form-select" style="width: 150px;">
+              <option>Sprint 23</option>
+              <option>Sprint 22</option>
+              <option>Sprint 21</option>
+            </select>
+            <button class="btn btn-secondary">视图切换</button>
+          </div>
+        </div>
+
+        <div class="kanban-board">
+          <div class="kanban-column">
+            <div class="kanban-header">
+              <span class="kanban-title">待开发</span>
+              <span class="kanban-count">4</span>
+            </div>
+            <div class="kanban-cards">
+              <div class="kanban-card">
+                <div class="kanban-card-title">深色模式开发</div>
+                <div class="kanban-card-meta">
+                  <span class="kanban-card-assignee"><span class="kanban-avatar" style="background: #6366F1;">张</span> 张伟</span>
+                  <span>P1</span>
+                </div>
+              </div>
+              <div class="kanban-card">
+                <div class="kanban-card-title">第三方登录对接</div>
+                <div class="kanban-card-meta">
+                  <span class="kanban-card-assignee"><span class="kanban-avatar" style="background: #10B981;">王</span> 王芳</span>
+                  <span>P2</span>
+                </div>
+              </div>
+              <div class="kanban-card">
+                <div class="kanban-card-title">性能监控埋点</div>
+                <div class="kanban-card-meta">
+                  <span class="kanban-card-assignee"><span class="kanban-avatar" style="background: #F59E0B;">陈</span> 陈静</span>
+                  <span>P1</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="kanban-column">
+            <div class="kanban-header">
+              <span class="kanban-title">开发中</span>
+              <span class="kanban-count">3</span>
+            </div>
+            <div class="kanban-cards">
+              <div class="kanban-card">
+                <div class="kanban-card-title">首页加载优化</div>
+                <div class="kanban-card-meta">
+                  <span class="kanban-card-assignee"><span class="kanban-avatar" style="background: #EC4899;">周</span> 周杰</span>
+                  <span>P0</span>
+                </div>
+              </div>
+              <div class="kanban-card">
+                <div class="kanban-card-title">批量操作功能</div>
+                <div class="kanban-card-meta">
+                  <span class="kanban-card-assignee"><span class="kanban-avatar" style="background: #6366F1;">张</span> 张伟</span>
+                  <span>P1</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="kanban-column">
+            <div class="kanban-header">
+              <span class="kanban-title">测试中</span>
+              <span class="kanban-count">2</span>
+            </div>
+            <div class="kanban-cards">
+              <div class="kanban-card">
+                <div class="kanban-card-title">数据导出功能</div>
+                <div class="kanban-card-meta">
+                  <span class="kanban-card-assignee"><span class="kanban-avatar" style="background: #10B981;">王</span> 王芳</span>
+                  <span>P1</span>
+                </div>
+              </div>
+              <div class="kanban-card">
+                <div class="kanban-card-title">支付流程优化</div>
+                <div class="kanban-card-meta">
+                  <span class="kanban-card-assignee"><span class="kanban-avatar" style="background: #EC4899;">周</span> 周杰</span>
+                  <span>P0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="kanban-column">
+            <div class="kanban-header">
+              <span class="kanban-title">已完成</span>
+              <span class="kanban-count">5</span>
+            </div>
+            <div class="kanban-cards">
+              <div class="kanban-card">
+                <div class="kanban-card-title">登录页改版</div>
+                <div class="kanban-card-meta">
+                  <span class="kanban-card-assignee"><span class="kanban-avatar" style="background: #F59E0B;">陈</span> 陈静</span>
+                  <span>P2</span>
+                </div>
+              </div>
+              <div class="kanban-card">
+                <div class="kanban-card-title">消息推送优化</div>
+                <div class="kanban-card-meta">
+                  <span class="kanban-card-assignee"><span class="kanban-avatar" style="background: #6366F1;">张</span> 张伟</span>
+                  <span>P2</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== AI ASSISTANT VIEW ========== -->
+      <div class="view" id="view-ai">
+        <div class="section-header">
+          <div>
+            <div class="breadcrumb"><span onclick="navigateTo('dashboard')">仪表盘</span> / AI 助手</div>
+            <h2>AI 助手</h2>
+          </div>
+        </div>
+
+        <div class="ai-chat-container">
+          <div class="ai-messages">
+            <div class="ai-message ai">
+              <div class="ai-message-avatar">🤖</div>
+              <div class="ai-message-content">你好！我是你的 AI 产品助手。我可以帮助你：<br><br>• 撰写和优化 PRD 文档<br>• 分析用户反馈和数据<br>• 生成用户画像<br>• 协助需求分析和优先级排序<br><br>有什么我可以帮你的吗？</div>
+            </div>
+          </div>
+          <div class="ai-quick-prompts">
+            <button class="ai-prompt-btn">帮我写一个PRD模板</button>
+            <button class="ai-prompt-btn">分析这个用户反馈</button>
+            <button class="ai-prompt-btn">如何提升用户留存？</button>
+            <button class="ai-prompt-btn">竞品分析框架</button>
+          </div>
+          <div class="ai-input-area">
+            <input type="text" class="ai-input" placeholder="输入你的问题...">
+            <button class="ai-send-btn">发送</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== DOCUMENTS VIEW ========== -->
+      <div class="view" id="view-documents">
+        <div class="section-header">
+          <div>
+            <div class="breadcrumb"><span onclick="navigateTo('dashboard')">仪表盘</span> / 产品文档</div>
+            <h2>产品文档</h2>
+          </div>
+          <button class="btn btn-primary">+ 新建文档</button>
+        </div>
+
+        <div class="doc-category-tabs">
+          <button class="doc-tab active">全部</button>
+          <button class="doc-tab">PRD</button>
+          <button class="doc-tab">设计文档</button>
+          <button class="doc-tab">数据分析</button>
+          <button class="doc-tab">会议纪要</button>
+        </div>
+
+        <div class="docs-grid">
+          <div class="docs-card">
+            <div class="docs-card-icon" style="background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1));">📄</div>
+            <div class="docs-card-title">用户增长方案 PRD v3.2</div>
+            <div class="docs-card-meta">李明 · 2小时前 · 已更新</div>
+            <div class="docs-card-tags">
+              <span class="docs-card-tag">PRD</span>
+              <span class="docs-card-tag">v3.2</span>
+            </div>
+          </div>
+          <div class="docs-card">
+            <div class="docs-card-icon" style="background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(5,150,105,0.1));">📊</div>
+            <div class="docs-card-title">Q1 数据分析报告</div>
+            <div class="docs-card-meta">李明 · 昨天 · 已更新</div>
+            <div class="docs-card-tags">
+              <span class="docs-card-tag">数据</span>
+              <span class="docs-card-tag">Q1</span>
+            </div>
+          </div>
+          <div class="docs-card">
+            <div class="docs-card-icon" style="background: linear-gradient(135deg, rgba(236,72,153,0.1), rgba(219,39,119,0.1));">🎨</div>
+            <div class="docs-card-title">首页改版设计方案</div>
+            <div class="docs-card-meta">张伟 · 3天前</div>
+            <div class="docs-card-tags">
+              <span class="docs-card-tag">设计</span>
+              <span class="docs-card-tag">Figma</span>
+            </div>
+          </div>
+          <div class="docs-card">
+            <div class="docs-card-icon" style="background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(217,119,6,0.1));">📝</div>
+            <div class="docs-card-title">Sprint 23 规划会议纪要</div>
+            <div class="docs-card-meta">王芳 · 1周前</div>
+            <div class="docs-card-tags">
+              <span class="docs-card-tag">会议</span>
+              <span class="docs-card-tag">Sprint</span>
+            </div>
+          </div>
+          <div class="docs-card">
+            <div class="docs-card-icon" style="background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1));">📄</div>
+            <div class="docs-card-title">支付模块需求文档</div>
+            <div class="docs-card-meta">陈静 · 2周前</div>
+            <div class="docs-card-tags">
+              <span class="docs-card-tag">PRD</span>
+              <span class="docs-card-tag">支付</span>
+            </div>
+          </div>
+          <div class="docs-card">
+            <div class="docs-card-icon" style="background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(5,150,105,0.1));">📊</div>
+            <div class="docs-card-title">用户调研分析报告</div>
+            <div class="docs-card-meta">周杰 · 3周前</div>
+            <div class="docs-card-tags">
+              <span class="docs-card-tag">用户研究</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== USER PERSONAS VIEW ========== -->
+      <div class="view" id="view-personas">
+        <div class="section-header">
+          <div>
+            <div class="breadcrumb"><span onclick="navigateTo('dashboard')">仪表盘</span> / 用户画像</div>
+            <h2>用户画像</h2>
+          </div>
+          <button class="btn btn-primary">+ 创建画像</button>
+        </div>
+
+        <div class="personas-grid">
+          <div class="persona-card">
+            <div class="persona-avatar" style="background: linear-gradient(135deg, #6366F1, #8B5CF6); color: white;">👩</div>
+            <div class="persona-name">小李</div>
+            <div class="persona-type">都市年轻白领</div>
+            <div style="text-align: left; margin-top: 16px; font-size: 0.85rem; color: var(--text-secondary);">
+              <p><strong>基本信息</strong></p>
+              <p>• 年龄：28岁</p>
+              <p>• 职业：互联网产品经理</p>
+              <p>• 月收入：15K-25K</p>
+              <p>• 使用场景：日常办公、团队协作</p>
+            </div>
+            <div class="persona-tags" style="margin-top: 16px;">
+              <span class="persona-tag">追求效率</span>
+              <span class="persona-tag">愿意付费</span>
+              <span class="persona-tag">社交分享</span>
+            </div>
+          </div>
+          <div class="persona-card">
+            <div class="persona-avatar" style="background: linear-gradient(135deg, #10B981, #059669); color: white;">👨</div>
+            <div class="persona-name">老王</div>
+            <div class="persona-type">中小企业主</div>
+            <div style="text-align: left; margin-top: 16px; font-size: 0.85rem; color: var(--text-secondary);">
+              <p><strong>基本信息</strong></p>
+              <p>• 年龄：42岁</p>
+              <p>• 职业：制造业企业主</p>
+              <p>• 年营业额：500万-2000万</p>
+              <p>• 使用场景：管理团队、数据分析</p>
+            </div>
+            <div class="persona-tags" style="margin-top: 16px;">
+              <span class="persona-tag">决策者</span>
+              <span class="persona-tag">价格敏感</span>
+              <span class="persona-tag">需要培训</span>
+            </div>
+          </div>
+          <div class="persona-card">
+            <div class="persona-avatar" style="background: linear-gradient(135deg, #F59E0B, #D97706); color: white;">👴</div>
+            <div class="persona-name">张叔</div>
+            <div class="persona-type">传统行业从业者</div>
+            <div style="text-align: left; margin-top: 16px; font-size: 0.85rem; color: var(--text-secondary);">
+              <p><strong>基本信息</strong></p>
+              <p>• 年龄：52岁</p>
+              <p>• 职业：传统零售店主</p>
+              <p>• 月收入：8K-15K</p>
+              <p>• 使用场景：库存管理、销售统计</p>
+            </div>
+            <div class="persona-tags" style="margin-top: 16px;">
+              <span class="persona-tag">学习成本高</span>
+              <span class="persona-tag">价格导向</span>
+              <span class="persona-tag">简单易用</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== COMPETITORS VIEW ========== -->
+      <div class="view" id="view-competitors">
+        <div class="section-header">
+          <div>
+            <div class="breadcrumb"><span onclick="navigateTo('dashboard')">仪表盘</span> / 竞品分析</div>
+            <h2>竞品分析</h2>
+          </div>
+          <button class="btn btn-secondary">导出对比</button>
+        </div>
+
+        <div style="background: var(--card); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden;">
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; padding: 16px 24px; background: var(--bg); font-weight: 600; font-size: 0.85rem;">
+            <span>功能</span>
+            <span style="text-align: center;">我们</span>
+            <span style="text-align: center;">竞品A</span>
+            <span style="text-align: center;">竞品B</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--border); align-items: center;">
+            <span style="font-weight: 500;">深色模式</span>
+            <span style="text-align: center; color: var(--warning);">开发中</span>
+            <span style="text-align: center; color: var(--accent);">✓</span>
+            <span style="text-align: center; color: var(--accent);">✓</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--border); align-items: center;">
+            <span style="font-weight: 500;">批量操作</span>
+            <span style="text-align: center; color: var(--warning);">开发中</span>
+            <span style="text-align: center; color: var(--accent);">✓</span>
+            <span style="text-align: center; color: var(--danger);">✗</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--border); align-items: center;">
+            <span style="font-weight: 500;">第三方登录</span>
+            <span style="text-align: center; color: var(--warning);">开发中</span>
+            <span style="text-align: center; color: var(--accent);">✓</span>
+            <span style="text-align: center; color: var(--accent);">✓</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--border); align-items: center;">
+            <span style="font-weight: 500;">数据导出</span>
+            <span style="text-align: center; color: var(--warning);">开发中</span>
+            <span style="text-align: center; color: var(--accent);">✓</span>
+            <span style="text-align: center; color: var(--warning);">部分</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--border); align-items: center;">
+            <span style="font-weight: 500;">API 开放</span>
+            <span style="text-align: center; color: var(--accent);">✓</span>
+            <span style="text-align: center; color: var(--danger);">✗</span>
+            <span style="text-align: center; color: var(--accent);">✓</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--border); align-items: center;">
+            <span style="font-weight: 500;">移动端 App</span>
+            <span style="text-align: center; color: var(--accent);">✓</span>
+            <span style="text-align: center; color: var(--accent);">✓</span>
+            <span style="text-align: center; color: var(--danger);">✗</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; padding: 16px 24px; align-items: center;">
+            <span style="font-weight: 500;">AI 助手</span>
+            <span style="text-align: center; color: var(--accent);">✓</span>
+            <span style="text-align: center; color: var(--danger);">✗</span>
+            <span style="text-align: center; color: var(--warning);">Beta</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- FAB -->
+  <button class="fab" id="fabBtn" onclick="openModal()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">新建需求</h3>
+        <button class="modal-close" onclick="closeModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">需求标题</label>
+        <input type="text" class="form-input" placeholder="请输入需求标题">
+      </div>
+      <div class="form-group">
+        <label class="form-label">需求描述</label>
+        <textarea class="form-textarea" placeholder="请详细描述需求背景、目标和方案..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">优先级</label>
+        <select class="form-select">
+          <option value="p0">P0 - 紧急重要</option>
+          <option value="p1">P1 - 重要</option>
+          <option value="p2">P2 - 一般</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary">创建需求</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Navigation state
+    let currentView = 'dashboard';
+    let viewHistory = ['dashboard'];
+
+    const viewConfig = {
+      dashboard: { title: '仪表盘', subtitle: '下午好，李明。今日共有 5 项待办，3 个需求待评审。' },
+      requirements: { title: '需求管理', subtitle: '共 24 个需求，其中 8 个待评估，6 个已排期。' },
+      data: { title: '数据分析', subtitle: '数据更新于 2026-03-26 15:30' },
+      users: { title: '用户研究', subtitle: '已创建 3 个用户画像，完成 12 次用户访谈' },
+      schedule: { title: '项目排期', subtitle: 'Sprint 23 · 剩余 5 天' },
+      ai: { title: 'AI 助手', subtitle: '随时为你服务' },
+      documents: { title: '产品文档', subtitle: '共 28 篇文档' },
+      personas: { title: '用户画像', subtitle: '共 6 个用户画像' },
+      competitors: { title: '竞品分析', subtitle: '对比 3 家主要竞品' }
+    };
+
+    // Navigation
+    function navigateTo(view) {
+      if (view === currentView) return;
+
+      // Hide current view
+      document.getElementById(`view-${currentView}`).classList.remove('active');
+
+      // Show new view
+      document.getElementById(`view-${view}`).classList.add('active');
+
+      // Update history
+      if (currentView !== view) {
+        viewHistory.push(view);
+      }
+      currentView = view;
+
+      // Update nav active state
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.view === view);
+      });
+
+      // Update header
+      const config = viewConfig[view] || viewConfig.dashboard;
+      document.getElementById('pageTitle').textContent = config.title;
+      document.getElementById('pageSubtitle').textContent = config.subtitle;
+
+      // Show/hide back button
+      document.getElementById('backBtn').style.display = view === 'dashboard' ? 'none' : 'flex';
+
+      // Show/hide FAB based on view
+      const fabViews = ['dashboard', 'requirements', 'documents'];
+      document.getElementById('fabBtn').style.display = fabViews.includes(view) ? 'flex' : 'none';
+    }
+
+    function goBack() {
+      if (viewHistory.length > 1) {
+        viewHistory.pop();
+        navigateTo(viewHistory[viewHistory.length - 1]);
+      }
+    }
+
+    // Initialize navigation click handlers
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const view = item.dataset.view;
+        if (view) {
+          navigateTo(view);
+        }
+      });
+    });
+
+    // Task toggle
+    function toggleTask(checkbox) {
+      checkbox.classList.toggle('checked');
+      const taskItem = checkbox.closest('.task-item');
+      taskItem.classList.toggle('completed');
+    }
+
+    // Modal
+    function openModal() {
+      document.getElementById('modal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('modal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('modal')) {
+        closeModal();
+      }
+    });
+
+    // Close modal on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    });
+
+    // Filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+
+    // Doc tabs
+    document.querySelectorAll('.doc-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.doc-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    // Initialize
+    document.getElementById('backBtn').style.display = 'none';
+    document.querySelectorAll('.view').forEach((view, index) => {
+      view.style.animationDelay = `${index * 0.1}s`;
+    });
+  </script>
+</body>
+</html>

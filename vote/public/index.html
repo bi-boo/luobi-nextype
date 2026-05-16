@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>团队作品投票</title>
+<style>
+  :root {
+    --bg: #f9f7f4;
+    --text: #1a1a1a;
+    --text-sub: #6b6966;
+    --heart: #d94f43;
+    --border: rgba(0, 0, 0, 0.08);
+    --radius: 10px;
+    --ease: cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 48px 32px 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  /* ---- Header: left-aligned, editorial ---- */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 48px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h1 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 1.3;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: var(--text-sub);
+    margin-top: 4px;
+  }
+
+  .remaining {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: var(--text-sub);
+    flex-shrink: 0;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #d9d5d0;
+    transition: background 0.3s var(--ease);
+  }
+
+  .dot.filled { background: var(--heart); }
+
+  /* ---- Grid: generous vertical rhythm ---- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 32px 20px;
+  }
+
+  /* ---- Card: no container, gallery style ---- */
+  .card {
+    position: relative;
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  .card.visible {
+    animation: cardIn 0.45s var(--ease) forwards;
+  }
+
+  @keyframes cardIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .thumbnail {
+    display: block;
+    aspect-ratio: 1;
+    border-radius: var(--radius);
+    overflow: hidden;
+    position: relative;
+    background: #eae7e3;
+    text-decoration: none;
+  }
+
+  /* Hover overlay: subtle darken */
+  .thumbnail::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0);
+    transition: background 0.3s var(--ease);
+    z-index: 1;
+    border-radius: var(--radius);
+    pointer-events: none;
+  }
+
+  .thumbnail:hover::before { background: rgba(0, 0, 0, 0.05); }
+
+  .thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.5s var(--ease);
+  }
+
+  .thumbnail:hover img { transform: scale(1.03); }
+
+  .thumbnail:focus-visible {
+    outline: 2px solid var(--heart);
+    outline-offset: 3px;
+  }
+
+  /* Voted: red border on thumbnail */
+  .card.voted .thumbnail::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 2.5px solid var(--heart);
+    border-radius: var(--radius);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  /* Pending placeholder: solid warm gray */
+  .card.pending .placeholder {
+    background: #e5e1dc !important;
+    color: #c5c0b9;
+    font-size: 28px;
+    font-weight: 300;
+  }
+
+  /* ---- Card footer: title left, heart right ---- */
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 2px 0;
+    gap: 8px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  /* ---- Vote button: 44px touch target ---- */
+  .vote-btn {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 10px;
+    margin: -10px;
+    margin-left: 0;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-sub);
+    transition: color 0.2s var(--ease);
+    min-height: 44px;
+    min-width: 44px;
+    justify-content: flex-end;
+    flex-shrink: 0;
+  }
+
+  .vote-btn:hover {
+    color: var(--heart);
+    background: rgba(217, 79, 67, 0.06);
+  }
+
+  .vote-btn:focus-visible {
+    outline: 2px solid var(--heart);
+    outline-offset: -2px;
+  }
+
+  .vote-btn.voted { color: var(--heart); }
+
+  .vote-btn .heart {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  .vote-btn .heart path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    transition: fill 0.15s var(--ease);
+  }
+
+  .vote-btn.voted .heart path { fill: currentColor; }
+
+  .vote-btn.pop .heart {
+    animation: heartPop 0.35s var(--ease);
+  }
+
+  .vote-count {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+    display: inline-block;
+  }
+
+  .vote-count.bump {
+    animation: countBump 0.3s var(--ease);
+  }
+
+  @keyframes heartPop {
+    0% { transform: scale(1); }
+    25% { transform: scale(1.35); }
+    100% { transform: scale(1); }
+  }
+
+  @keyframes countBump {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.25); }
+    100% { transform: scale(1); }
+  }
+
+  /* ---- Pending cards ---- */
+  .card.pending { opacity: 0.3; pointer-events: none; }
+
+  /* ---- Toast ---- */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--text);
+    color: var(--bg);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    opacity: 0;
+    transition: all 0.25s var(--ease);
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ---- Responsive ---- */
+  @media (max-width: 960px) {
+    .grid { grid-template-columns: repeat(3, 1fr); gap: 24px 16px; }
+  }
+
+  @media (max-width: 640px) {
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 24px 16px; }
+    body { padding: 28px 20px 60px; }
+    header { margin-bottom: 32px; padding-bottom: 16px; }
+    h1 { font-size: 22px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div>
+      <h1>团队作品投票</h1>
+      <p class="subtitle">选出你最喜欢的两个作品</p>
+    </div>
+    <div class="remaining" aria-label="剩余投票数">
+      <span>剩余</span>
+      <span class="dot filled" id="dot1"></span>
+      <span class="dot filled" id="dot2"></span>
+    </div>
+  </header>
+  <main>
+    <div class="grid" id="grid" role="list"></div>
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const PROJECTS = [
+  { id: '1', title: '智能工作台' },
+  { id: '2', title: '赛博朋克碎片' },
+  { id: '3', title: '用户反馈与需求分析' },
+  { id: '4', title: 'AI 星云纪' },
+  { id: '5', title: '全球天气追踪' },
+];
+
+const MAX_VOTES = 2;
+const STORAGE_KEY = 'team_vote_selected';
+
+const GRADIENTS = [
+  ['#667eea','#764ba2'], ['#f093fb','#f5576c'],
+  ['#4facfe','#00f2fe'], ['#43e97b','#38f9d7'],
+  ['#fa709a','#fee140'], ['#a18cd1','#fbc2eb'],
+  ['#fccb90','#d57eeb'], ['#30cfd0','#330867'],
+];
+
+let voteCounts = {};
+
+function getMyVotes() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
+}
+
+function saveMyVotes(arr) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+}
+
+function render() {
+  const grid = document.getElementById('grid');
+  const myVotes = getMyVotes();
+  grid.innerHTML = '';
+
+  PROJECTS.forEach((p, i) => {
+    const voted = myVotes.includes(p.id);
+    const count = voteCounts[p.id] || 0;
+    const [c1, c2] = GRADIENTS[i % GRADIENTS.length];
+    const isPending = p.pending;
+
+    const card = document.createElement('div');
+    card.className = 'card' + (voted ? ' voted' : '') + (isPending ? ' pending' : '');
+    card.setAttribute('role', 'listitem');
+
+    const placeholderChar = isPending ? '?' : p.title[0];
+    const placeholderStyle = isPending
+      ? 'display:flex'
+      : `display:none;background:linear-gradient(135deg,${c1},${c2})`;
+
+    card.innerHTML = `
+      <a href="projects/${p.id}/index.html" target="_blank" class="thumbnail"
+         aria-label="查看 ${p.title}" ${isPending ? 'tabindex="-1"' : ''}>
+        <img src="thumbnails/${p.id}.png" alt="${p.title} 作品预览"
+             ${isPending ? 'style="display:none"' : ''}
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+        <div class="placeholder" style="${placeholderStyle}">${placeholderChar}</div>
+      </a>
+      <div class="card-footer">
+        <span class="card-title" title="${p.title}">${p.title}</span>
+        <button class="vote-btn${voted ? ' voted' : ''}" data-id="${p.id}"
+                aria-label="给 ${p.title} 投票，当前 ${count} 票"
+                ${isPending ? 'disabled' : ''}>
+          <svg class="heart" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          </svg>
+          <span class="vote-count">${count}</span>
+        </button>
+      </div>`;
+    grid.appendChild(card);
+
+    // Staggered entrance animation
+    setTimeout(() => card.classList.add('visible'), 40 * i);
+  });
+
+  updateDots(myVotes.length);
+}
+
+function updateDots(used) {
+  const remaining = MAX_VOTES - used;
+  document.getElementById('dot1').className = 'dot' + (remaining >= 1 ? ' filled' : '');
+  document.getElementById('dot2').className = 'dot' + (remaining >= 2 ? ' filled' : '');
+}
+
+document.getElementById('grid').addEventListener('click', async (e) => {
+  const btn = e.target.closest('.vote-btn');
+  if (!btn || btn.disabled) return;
+
+  const id = btn.dataset.id;
+  const myVotes = getMyVotes();
+  const voted = myVotes.includes(id);
+
+  if (voted) {
+    const res = await fetch('api/unvote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId: id }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      voteCounts = data.votes;
+      saveMyVotes(myVotes.filter(v => v !== id));
+      render();
+      showToast('已取消投票');
+    }
+  } else {
+    if (myVotes.length >= MAX_VOTES) {
+      showToast('已用完 2 票，可取消后重新投');
+      return;
+    }
+    const res = await fetch('api/vote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId: id }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      voteCounts = data.votes;
+      saveMyVotes([...myVotes, id]);
+      render();
+      showToast('已投票');
+      requestAnimationFrame(() => {
+        const newBtn = document.querySelector(`.vote-btn[data-id="${id}"]`);
+        if (newBtn) {
+          newBtn.classList.add('pop');
+          const countEl = newBtn.querySelector('.vote-count');
+          if (countEl) countEl.classList.add('bump');
+          setTimeout(() => {
+            newBtn.classList.remove('pop');
+            if (countEl) countEl.classList.remove('bump');
+          }, 350);
+        }
+      });
+    }
+  }
+});
+
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+(async () => {
+  try {
+    const res = await fetch('api/votes');
+    voteCounts = await res.json();
+  } catch {}
+  render();
+})();
+</script>
+</body>
+</html>

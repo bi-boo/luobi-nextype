@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>用户反馈与需求分析</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --primary: #7c3aed;
+    --secondary: #a78bfa;
+    --accent: #f0abfc;
+    --cyan: #67e8f9;
+    --amber: #fde68a;
+    --emerald: #6ee7b7;
+    --rose: #fda4af;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(135deg, #0a0a14 0%, #12101f 50%, #0d0b18 100%);
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Background Mesh Gradient Effect */
+  .bg-mesh {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .bg-mesh::before {
+    content: '';
+    position: absolute;
+    width: 150%;
+    height: 150%;
+    top: -25%;
+    left: -25%;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 30%, rgba(236, 72, 153, 0.12) 0%, transparent 45%),
+      radial-gradient(ellipse at 40% 80%, rgba(103, 232, 249, 0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 70%, rgba(167, 139, 250, 0.1) 0%, transparent 45%);
+    animation: meshFloat 20s ease-in-out infinite;
+  }
+
+  .bg-mesh::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%237c3aed' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.5;
+  }
+
+  @keyframes meshFloat {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(2%, 1%) rotate(1deg); }
+    50% { transform: translate(-1%, 2%) rotate(-1deg); }
+    75% { transform: translate(1%, -1%) rotate(0.5deg); }
+  }
+
+  /* Ambient Glow Orbs */
+  .glow-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+    animation: orbFloat 15s ease-in-out infinite;
+  }
+
+  .glow-orb-1 {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.3) 0%, transparent 70%);
+    top: 10%;
+    left: -10%;
+    animation-delay: 0s;
+  }
+
+  .glow-orb-2 {
+    width: 350px;
+    height: 350px;
+    background: radial-gradient(circle, rgba(236, 72, 153, 0.25) 0%, transparent 70%);
+    bottom: 20%;
+    right: -5%;
+    animation-delay: -5s;
+  }
+
+  .glow-orb-3 {
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(103, 232, 249, 0.2) 0%, transparent 70%);
+    top: 50%;
+    left: 50%;
+    animation-delay: -10s;
+  }
+
+  @keyframes orbFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+    25% { transform: translate(30px, -40px) scale(1.05); opacity: 0.8; }
+    50% { transform: translate(-20px, 20px) scale(0.95); opacity: 0.5; }
+    75% { transform: translate(40px, 10px) scale(1.02); opacity: 0.7; }
+  }
+
+  /* Interactive elements hide cursor */
+  .flip-card, button, .scroll-hint {
+    cursor: none;
+  }
+
+  /* Cursor Follower */
+  .cursor-follower {
+    position: fixed;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.5) 0%, rgba(167, 139, 250, 0.3) 40%, rgba(240, 171, 252, 0.15) 70%, transparent 100%);
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    mix-blend-mode: screen;
+    box-shadow:
+      0 0 60px rgba(124, 58, 237, 0.8),
+      0 0 120px rgba(167, 139, 250, 0.6),
+      0 0 180px rgba(240, 171, 252, 0.4),
+      inset 0 0 50px rgba(255, 255, 255, 0.2);
+  }
+
+  .cursor-follower.active { opacity: 1; }
+
+  .cursor-follower::before {
+    content: '';
+    position: absolute;
+    inset: -25px;
+    border-radius: 50%;
+    border: 2px solid rgba(124, 58, 237, 0.6);
+    animation: cursorRing 1s ease-in-out infinite;
+  }
+
+  .cursor-follower::after {
+    content: '';
+    position: absolute;
+    inset: -50px;
+    border-radius: 50%;
+    border: 1px solid rgba(167, 139, 250, 0.4);
+    animation: cursorRing 1.2s ease-in-out infinite 0.3s;
+  }
+
+  .cursor-follower-outer {
+    position: absolute;
+    inset: -70px;
+    border-radius: 50%;
+    border: 1px solid rgba(240, 171, 252, 0.3);
+    animation: cursorRing 1.5s ease-in-out infinite 0.6s;
+  }
+
+  .cursor-follower-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    background: white;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow:
+      0 0 15px white,
+      0 0 30px rgba(124, 58, 237, 1),
+      0 0 45px rgba(124, 58, 237, 0.7);
+    animation: centerPulse 0.8s ease-in-out infinite;
+  }
+
+  @keyframes cursorRing {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.5); opacity: 0; }
+  }
+
+  @keyframes centerPulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
+    50% { transform: translate(-50%, -50%) scale(1.4); opacity: 0.5; }
+  }
+
+  /* Trail Particles */
+  .trail-particle {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    animation: trailFade 0.6s ease-out forwards;
+  }
+
+  @keyframes trailFade {
+    0% { opacity: 0.95; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+  }
+
+  /* Large Spotlight */
+  .spotlight {
+    position: fixed;
+    width: 1200px;
+    height: 1200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.1) 0%, rgba(167, 139, 250, 0.06) 30%, rgba(240, 171, 252, 0.03) 60%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    transform: translate(-50%, -50%);
+    transition: left 0.08s linear, top 0.08s linear;
+  }
+
+  /* Enhanced Particles */
+  .particles {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.6;
+    animation: particleFloat 10s linear infinite;
+    box-shadow: 0 0 15px currentColor, 0 0 30px currentColor;
+  }
+
+  @keyframes particleFloat {
+    0% { transform: translateY(100vh) rotate(0deg) scale(0.3); opacity: 0; }
+    10% { opacity: 0.8; transform: scale(1); }
+    90% { opacity: 0.8; }
+    100% { transform: translateY(-100vh) rotate(1080deg) scale(0.3); opacity: 0; }
+  }
+
+  /* Hero Section */
+  .hero {
+    position: relative;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .hero-card {
+    position: sticky;
+    top: 0;
+    width: 84vw;
+    max-width: 960px;
+    height: 70vh;
+    margin: 15vh auto 0;
+    background: linear-gradient(145deg, rgba(35, 30, 55, 0.95), rgba(25, 20, 45, 0.98));
+    border-radius: 50px;
+    border: 1px solid rgba(124, 58, 237, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    box-shadow:
+      0 0 80px rgba(124, 58, 237, 0.35),
+      0 0 150px rgba(167, 139, 250, 0.2),
+      inset 0 1px 0 rgba(255,255,255,0.1),
+      inset 0 -20px 60px rgba(124, 58, 237, 0.1);
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.6s cubic-bezier(0.4, 0, 0.2, 1), height 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), margin 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+  }
+
+  .hero-card::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 52px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent), var(--cyan), var(--secondary));
+    z-index: -1;
+    animation: borderRotate 4s linear infinite;
+    background-size: 400% 400%;
+  }
+
+  .hero-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50px;
+    background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  @keyframes borderRotate {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .hero-card.collapsed {
+    height: 0;
+    margin-top: 0;
+    border-radius: 0 0 50px 50px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .hero-content {
+    text-align: center;
+    z-index: 2;
+    padding: 20px 40px;
+    transition: opacity 0.5s ease 0.2s, transform 0.5s ease 0.2s;
+  }
+
+  .hero-card.collapsed .hero-content {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+
+  .hero-content h1 {
+    font-size: clamp(24px, 4vw, 42px);
+    font-weight: 900;
+    background: linear-gradient(135deg, #fff 0%, #c4b5fd 30%, var(--primary) 60%, var(--secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+    text-shadow: 0 0 80px rgba(124, 58, 237, 0.6);
+    animation: textShine 3s ease-in-out infinite;
+    position: relative;
+  }
+
+  .hero-content h1::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: textGleam 4s ease-in-out infinite;
+  }
+
+  @keyframes textShine {
+    0%, 100% { filter: brightness(1) drop-shadow(0 0 20px rgba(124, 58, 237, 0.5)); }
+    50% { filter: brightness(1.15) drop-shadow(0 0 40px rgba(124, 58, 237, 0.7)); }
+  }
+
+  @keyframes textGleam {
+    0%, 100% { opacity: 0; transform: translateX(-100%); }
+    50% { opacity: 0.5; transform: translateX(100%); }
+  }
+
+  .hero-content p {
+    margin-top: 12px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 2px;
+  }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255,255,255,0.5);
+    font-size: 11px;
+    animation: bounce 2s ease-in-out infinite;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  .hero-card.collapsed .scroll-hint {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+    pointer-events: none;
+  }
+
+  .scroll-hint-icon {
+    width: 20px;
+    height: 32px;
+    border: 2px solid rgba(196, 181, 253, 0.4);
+    border-radius: 10px;
+    position: relative;
+  }
+
+  .scroll-hint-icon::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 3px;
+    height: 6px;
+    background: linear-gradient(180deg, var(--primary), var(--secondary));
+    border-radius: 2px;
+    animation: scrollDot 2s ease-in-out infinite;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(8px); }
+  }
+
+  @keyframes scrollDot {
+    0%, 100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+    50% { transform: translateX(-50%) translateY(8px); opacity: 0.3; }
+  }
+
+  /* Hero Background Pattern Icons */
+  .hero-patterns {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    z-index: 1;
+  }
+
+  .pattern-icon {
+    position: absolute;
+    opacity: 0.15;
+    animation: floatPattern 20s ease-in-out infinite;
+  }
+
+  .pattern-icon svg {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+  }
+
+  .pattern-icon:nth-child(1) { top: 8%; left: 5%; width: 50px; height: 50px; color: var(--primary); animation-delay: 0s; }
+  .pattern-icon:nth-child(2) { top: 12%; right: 8%; width: 40px; height: 40px; color: var(--secondary); animation-delay: -3s; }
+  .pattern-icon:nth-child(3) { top: 55%; left: 6%; width: 45px; height: 45px; color: var(--accent); animation-delay: -6s; }
+  .pattern-icon:nth-child(4) { top: 65%; right: 10%; width: 55px; height: 55px; color: var(--cyan); animation-delay: -9s; }
+  .pattern-icon:nth-child(5) { top: 35%; left: 3%; width: 35px; height: 35px; color: var(--amber); animation-delay: -12s; }
+  .pattern-icon:nth-child(6) { top: 30%; right: 4%; width: 40px; height: 40px; color: var(--emerald); animation-delay: -15s; }
+  .pattern-icon:nth-child(7) { bottom: 12%; left: 12%; width: 35px; height: 35px; color: #fda4af; animation-delay: -18s; }
+  .pattern-icon:nth-child(8) { bottom: 18%; right: 15%; width: 50px; height: 50px; color: var(--primary); animation-delay: -4s; }
+  .pattern-icon:nth-child(9) { top: 22%; left: 18%; width: 30px; height: 30px; color: var(--secondary); animation-delay: -8s; }
+  .pattern-icon:nth-child(10) { top: 45%; right: 3%; width: 50px; height: 50px; color: var(--accent); animation-delay: -14s; }
+  .pattern-icon:nth-child(11) { bottom: 25%; left: 4%; width: 28px; height: 28px; color: var(--cyan); animation-delay: -2s; }
+  .pattern-icon:nth-child(12) { top: 4%; left: 38%; width: 35px; height: 35px; color: var(--amber); animation-delay: -10s; }
+
+  @keyframes floatPattern {
+    0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    25% { transform: translate(15px, -20px) rotate(5deg) scale(1.05); }
+    50% { transform: translate(-10px, 10px) rotate(-3deg) scale(0.95); }
+    75% { transform: translate(20px, 15px) rotate(8deg) scale(1.02); }
+  }
+
+  /* Floating Particles */
+  .particles {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.5;
+    animation: particleFloat 15s linear infinite;
+  }
+
+  .particle:nth-child(1) { width: 4px; height: 4px; background: var(--primary); left: 10%; animation-duration: 18s; }
+  .particle:nth-child(2) { width: 6px; height: 6px; background: var(--accent); left: 25%; animation-duration: 22s; animation-delay: -5s; }
+  .particle:nth-child(3) { width: 3px; height: 3px; background: var(--cyan); left: 40%; animation-duration: 16s; animation-delay: -10s; }
+  .particle:nth-child(4) { width: 5px; height: 5px; background: var(--secondary); left: 55%; animation-duration: 20s; animation-delay: -3s; }
+  .particle:nth-child(5) { width: 4px; height: 4px; background: var(--amber); left: 70%; animation-duration: 24s; animation-delay: -8s; }
+  .particle:nth-child(6) { width: 7px; height: 7px; background: var(--emerald); left: 85%; animation-duration: 19s; animation-delay: -12s; }
+  .particle:nth-child(7) { width: 3px; height: 3px; background: var(--rose); left: 15%; animation-duration: 21s; animation-delay: -6s; }
+  .particle:nth-child(8) { width: 5px; height: 5px; background: var(--primary); left: 60%; animation-duration: 17s; animation-delay: -15s; }
+
+  @keyframes particleFloat {
+    0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.6; }
+    90% { opacity: 0.6; }
+    100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Content Section */
+  .content {
+    position: relative;
+    z-index: 5;
+    padding: 60px 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* Content divider line */
+  .content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 800px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.3), transparent);
+  }
+
+  /* Section Title */
+  .section-header {
+    text-align: center;
+    margin-bottom: 40px;
+    position: relative;
+  }
+
+  .section-header::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 60px;
+    background: radial-gradient(ellipse, rgba(124, 58, 237, 0.2) 0%, transparent 70%);
+    filter: blur(20px);
+    z-index: -1;
+  }
+
+  .section-header h2 {
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff 0%, #c4b5fd 50%, var(--primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+    display: inline-block;
+  }
+
+  .section-header h2::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+    border-radius: 2px;
+  }
+
+  /* Flip Cards Grid */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 30px;
+  }
+
+  /* Card Entrance Animation */
+  .flip-card {
+    opacity: 0;
+    transform: translateY(40px);
+    animation: cardEntrance 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .flip-card:nth-child(1) { animation-delay: 0.1s; }
+  .flip-card:nth-child(2) { animation-delay: 0.2s; }
+  .flip-card:nth-child(3) { animation-delay: 0.3s; }
+  .flip-card:nth-child(4) { animation-delay: 0.4s; }
+  .flip-card:nth-child(5) { animation-delay: 0.5s; }
+  .flip-card:nth-child(6) { animation-delay: 0.6s; }
+
+  @keyframes cardEntrance {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Enhanced Card Hover with Light Reflection */
+  .flip-card-front::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.05),
+      transparent
+    );
+    transition: left 0.6s ease;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .flip-card:hover .flip-card-front::after {
+    left: 100%;
+  }
+
+  /* Card Glow Pulse on Hover */
+  .flip-card:hover .flip-card-front {
+    transform: scale(1.02);
+  }
+
+  /* Flip Card */
+  .flip-card {
+    perspective: 1000px;
+    height: 420px;
+  }
+
+  .flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+  }
+
+  .flip-card.flipped .flip-card-inner {
+    transform: rotateY(180deg);
+  }
+
+  .flip-card-front, .flip-card-back {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 24px;
+    overflow: hidden;
+  }
+
+  .flip-card-front {
+    background: linear-gradient(145deg, rgba(40, 35, 65, 0.92), rgba(30, 25, 50, 0.96));
+    display: flex;
+    flex-direction: column;
+    transition: all 0.4s;
+    z-index: 2;
+  }
+
+  .flip-card-back {
+    background: linear-gradient(135deg, rgba(25, 25, 50, 0.98), rgba(15, 15, 35, 0.99));
+    transform: rotateY(180deg);
+    overflow-y: auto;
+    padding: 24px;
+    z-index: 1;
+  }
+
+  .flip-card.flipped .flip-card-front {
+    z-index: 1;
+  }
+
+  .flip-card.flipped .flip-card-back {
+    z-index: 2;
+  }
+
+  .flip-card-front:hover {
+    transform: scale(1.02);
+  }
+
+  /* Pattern backgrounds on front only */
+  .flip-card-front::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* All cards use dot pattern - Card 1 Rose */
+  .flip-card:nth-child(1) .flip-card-front::before {
+    background: repeating-radial-gradient(
+      circle at center,
+      transparent,
+      transparent 4px,
+      rgba(253, 164, 175, 0.1) 4px,
+      rgba(253, 164, 175, 0.1) 8px
+    );
+  }
+  .flip-card:nth-child(1) .flip-card-front {
+    border: 5px solid rgba(253, 164, 175, 0.5);
+    box-shadow: 0 0 30px rgba(253, 164, 175, 0.25);
+    animation: breatheRose 3s ease-in-out infinite;
+  }
+  .flip-card:nth-child(1):hover .flip-card-front {
+    border-color: rgba(253, 164, 175, 0.85);
+    box-shadow: 0 0 50px rgba(253, 164, 175, 0.45);
+    animation: none;
+  }
+
+  /* All cards use dot pattern - Card 2 Purple */
+  .flip-card:nth-child(2) .flip-card-front::before {
+    background: repeating-radial-gradient(
+      circle at center,
+      transparent,
+      transparent 4px,
+      rgba(167, 139, 250, 0.1) 4px,
+      rgba(167, 139, 250, 0.1) 8px
+    );
+  }
+  .flip-card:nth-child(2) .flip-card-front {
+    border: 5px solid rgba(167, 139, 250, 0.5);
+    box-shadow: 0 0 30px rgba(167, 139, 250, 0.25);
+    animation: breathePurple 3s ease-in-out infinite;
+  }
+  .flip-card:nth-child(2):hover .flip-card-front {
+    border-color: rgba(167, 139, 250, 0.85);
+    box-shadow: 0 0 50px rgba(167, 139, 250, 0.45);
+    animation: none;
+  }
+
+  /* All cards use dot pattern - Card 3 Cyan */
+  .flip-card:nth-child(3) .flip-card-front::before {
+    background: repeating-radial-gradient(
+      circle at center,
+      transparent,
+      transparent 4px,
+      rgba(103, 232, 249, 0.1) 4px,
+      rgba(103, 232, 249, 0.1) 8px
+    );
+  }
+  .flip-card:nth-child(3) .flip-card-front {
+    border: 5px solid rgba(103, 232, 249, 0.5);
+    box-shadow: 0 0 30px rgba(103, 232, 249, 0.25);
+    animation: breatheCyan 3s ease-in-out infinite;
+  }
+  .flip-card:nth-child(3):hover .flip-card-front {
+    border-color: rgba(103, 232, 249, 0.85);
+    box-shadow: 0 0 50px rgba(103, 232, 249, 0.45);
+    animation: none;
+  }
+
+  /* All cards use dot pattern - Card 4 Amber */
+  .flip-card:nth-child(4) .flip-card-front::before {
+    background: repeating-radial-gradient(
+      circle at center,
+      transparent,
+      transparent 4px,
+      rgba(253, 230, 138, 0.1) 4px,
+      rgba(253, 230, 138, 0.1) 8px
+    );
+  }
+  .flip-card:nth-child(4) .flip-card-front {
+    border: 5px solid rgba(253, 230, 138, 0.5);
+    box-shadow: 0 0 30px rgba(253, 230, 138, 0.25);
+    animation: breatheAmber 3s ease-in-out infinite;
+  }
+  .flip-card:nth-child(4):hover .flip-card-front {
+    border-color: rgba(253, 230, 138, 0.85);
+    box-shadow: 0 0 50px rgba(253, 230, 138, 0.45);
+    animation: none;
+  }
+
+  /* All cards use dot pattern - Card 5 Emerald */
+  .flip-card:nth-child(5) .flip-card-front::before {
+    background: repeating-radial-gradient(
+      circle at center,
+      transparent,
+      transparent 4px,
+      rgba(110, 231, 183, 0.1) 4px,
+      rgba(110, 231, 183, 0.1) 8px
+    );
+  }
+  .flip-card:nth-child(5) .flip-card-front {
+    border: 5px solid rgba(110, 231, 183, 0.5);
+    box-shadow: 0 0 30px rgba(110, 231, 183, 0.25);
+    animation: breatheEmerald 3s ease-in-out infinite;
+  }
+  .flip-card:nth-child(5):hover .flip-card-front {
+    border-color: rgba(110, 231, 183, 0.85);
+    box-shadow: 0 0 50px rgba(110, 231, 183, 0.45);
+    animation: none;
+  }
+
+  /* All cards use dot pattern - Card 6 Indigo */
+  .flip-card:nth-child(6) .flip-card-front::before {
+    background: repeating-radial-gradient(
+      circle at center,
+      transparent,
+      transparent 4px,
+      rgba(124, 58, 237, 0.1) 4px,
+      rgba(124, 58, 237, 0.1) 8px
+    );
+  }
+  .flip-card:nth-child(6) .flip-card-front {
+    border: 5px solid rgba(124, 58, 237, 0.5);
+    box-shadow: 0 0 30px rgba(124, 58, 237, 0.25);
+    animation: breatheIndigo 3s ease-in-out infinite;
+  }
+  .flip-card:nth-child(6):hover .flip-card-front {
+    border-color: rgba(124, 58, 237, 0.85);
+    box-shadow: 0 0 50px rgba(124, 58, 237, 0.45);
+    animation: none;
+  }
+
+  /* Breathing glow animations */
+  @keyframes breatheRose {
+    0%, 100% { box-shadow: 0 0 20px rgba(253, 164, 175, 0.25), 0 0 40px rgba(253, 164, 175, 0.1); }
+    50% { box-shadow: 0 0 40px rgba(253, 164, 175, 0.4), 0 0 80px rgba(253, 164, 175, 0.15); }
+  }
+  @keyframes breathePurple {
+    0%, 100% { box-shadow: 0 0 20px rgba(167, 139, 250, 0.25), 0 0 40px rgba(167, 139, 250, 0.1); }
+    50% { box-shadow: 0 0 40px rgba(167, 139, 250, 0.4), 0 0 80px rgba(167, 139, 250, 0.15); }
+  }
+  @keyframes breatheCyan {
+    0%, 100% { box-shadow: 0 0 20px rgba(103, 232, 249, 0.25), 0 0 40px rgba(103, 232, 249, 0.1); }
+    50% { box-shadow: 0 0 40px rgba(103, 232, 249, 0.4), 0 0 80px rgba(103, 232, 249, 0.15); }
+  }
+  @keyframes breatheAmber {
+    0%, 100% { box-shadow: 0 0 20px rgba(253, 230, 138, 0.25), 0 0 40px rgba(253, 230, 138, 0.1); }
+    50% { box-shadow: 0 0 40px rgba(253, 230, 138, 0.4), 0 0 80px rgba(253, 230, 138, 0.15); }
+  }
+  @keyframes breatheEmerald {
+    0%, 100% { box-shadow: 0 0 20px rgba(110, 231, 183, 0.25), 0 0 40px rgba(110, 231, 183, 0.1); }
+    50% { box-shadow: 0 0 40px rgba(110, 231, 183, 0.4), 0 0 80px rgba(110, 231, 183, 0.15); }
+  }
+  @keyframes breatheIndigo {
+    0%, 100% { box-shadow: 0 0 20px rgba(124, 58, 237, 0.25), 0 0 40px rgba(124, 58, 237, 0.1); }
+    50% { box-shadow: 0 0 40px rgba(124, 58, 237, 0.4), 0 0 80px rgba(124, 58, 237, 0.15); }
+  }
+
+  /* Card-specific back borders - 5px thick */
+  .flip-card:nth-child(1) .flip-card-back { border: 5px solid rgba(253, 164, 175, 0.5); }
+  .flip-card:nth-child(2) .flip-card-back { border: 5px solid rgba(167, 139, 250, 0.5); }
+  .flip-card:nth-child(3) .flip-card-back { border: 5px solid rgba(103, 232, 249, 0.5); }
+  .flip-card:nth-child(4) .flip-card-back { border: 5px solid rgba(253, 230, 138, 0.5); }
+  .flip-card:nth-child(5) .flip-card-back { border: 5px solid rgba(110, 231, 183, 0.5); }
+  .flip-card:nth-child(6) .flip-card-back { border: 5px solid rgba(124, 58, 237, 0.5); }
+
+  .flip-card-back::-webkit-scrollbar { width: 6px; }
+  .flip-card-back::-webkit-scrollbar-track { background: rgba(124, 58, 237, 0.1); border-radius: 3px; }
+  .flip-card-back::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--primary), var(--secondary), var(--accent)); border-radius: 3px; }
+
+  .card-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(124, 58, 237, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-header h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-header h3::before {
+    content: '';
+    width: 4px;
+    height: 18px;
+    background: linear-gradient(180deg, var(--primary), var(--secondary), var(--accent));
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* Each card has its own accent color bar */
+  .flip-card:nth-child(1) .card-header h3::before { background: linear-gradient(180deg, #fda4af, #fecdd3); }
+  .flip-card:nth-child(2) .card-header h3::before { background: linear-gradient(180deg, #a78bfa, #c4b5fd); }
+  .flip-card:nth-child(3) .card-header h3::before { background: linear-gradient(180deg, #67e8f9, #a5f3fc); }
+  .flip-card:nth-child(4) .card-header h3::before { background: linear-gradient(180deg, #fde68a, #fef08a); }
+  .flip-card:nth-child(5) .card-header h3::before { background: linear-gradient(180deg, #6ee7b7, #a7f3d0); }
+  .flip-card:nth-child(6) .card-header h3::before { background: linear-gradient(180deg, #7c3aed, #a78bfa); }
+
+  .flip-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    background: rgba(124, 58, 237, 0.1);
+    padding: 6px 12px;
+    border-radius: 20px;
+    transition: all 0.3s;
+  }
+
+  .flip-card:nth-child(1) .flip-card-front .card-header h3::before,
+  .flip-card:nth-child(1) .flip-hint { background: rgba(253, 164, 175, 0.15); color: #fda4af; }
+
+  .flip-card:nth-child(2) .flip-card-front .card-header h3::before,
+  .flip-card:nth-child(2) .flip-hint { background: rgba(167, 139, 250, 0.15); color: #c4b5fd; }
+
+  .flip-card:nth-child(3) .flip-card-front .card-header h3::before,
+  .flip-card:nth-child(3) .flip-hint { background: rgba(103, 232, 249, 0.15); color: #67e8f9; }
+
+  .flip-card:nth-child(4) .flip-card-front .card-header h3::before,
+  .flip-card:nth-child(4) .flip-hint { background: rgba(253, 230, 138, 0.15); color: #fde68a; }
+
+  .flip-card:nth-child(5) .flip-card-front .card-header h3::before,
+  .flip-card:nth-child(5) .flip-hint { background: rgba(110, 231, 183, 0.15); color: #6ee7b7; }
+
+  .flip-card:nth-child(6) .flip-card-front .card-header h3::before,
+  .flip-card:nth-child(6) .flip-hint { background: rgba(124, 58, 237, 0.15); color: #c4b5fd; }
+
+  .flip-card-front:hover .flip-hint {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255,255,255,0.85);
+    transform: scale(1.02);
+  }
+
+  .flip-hint svg {
+    width: 14px;
+    height: 14px;
+    animation: flipHintAnim 2s ease-in-out infinite;
+  }
+
+  @keyframes flipHintAnim {
+    0%, 100% { transform: rotateY(0); }
+    50% { transform: rotateY(180deg); }
+  }
+
+  .card-body {
+    flex: 1;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card-body canvas {
+    max-width: 100%;
+    max-height: 280px;
+  }
+
+  /* Pain List (Front) */
+  .pain-preview {
+    width: 100%;
+  }
+
+  .pain-preview-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(124, 58, 237, 0.1);
+  }
+
+  .pain-preview-item:last-child { border-bottom: none; }
+
+  .pain-preview-num {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+  }
+
+  .pain-preview-text {
+    flex: 1;
+    font-size: 13px;
+    color: rgba(255,255,255,0.8);
+  }
+
+  .pain-preview-count {
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* Match Preview (Front) */
+  .match-preview {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .match-preview-item {
+    background: rgba(124, 58, 237, 0.1);
+    border-radius: 12px;
+    padding: 14px;
+    border-left: 3px solid transparent;
+    border-image: linear-gradient(180deg, var(--primary), var(--secondary)) 1;
+  }
+
+  .match-preview-item h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .match-preview-item .tag {
+    font-size: 10px;
+    padding: 2px 8px;
+  }
+
+  .match-preview-item:hover {
+    background: rgba(124, 58, 237, 0.15);
+    transform: translateX(4px);
+    transition: all 0.3s ease;
+  }
+
+  /* Table Preview (Front) */
+  .table-preview {
+    width: 100%;
+  }
+
+  .table-preview-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .table-preview-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(124, 58, 237, 0.08);
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+  }
+
+  .table-preview-row:last-child { border-bottom: none; }
+
+  /* Stats Preview */
+  .stats-preview {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    width: 100%;
+  }
+
+  .stat-preview-item {
+    text-align: center;
+    padding: 16px;
+    background: rgba(124, 58, 237, 0.1);
+    border-radius: 12px;
+    border: 1px solid rgba(124, 58, 237, 0.1);
+  }
+
+  .stat-preview-num {
+    font-size: 32px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stat-preview-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Back Content */
+  .back-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+  }
+
+  .flip-card:nth-child(1) .back-title { border-bottom-color: rgba(253, 164, 175, 0.3); color: #fda4af; }
+  .flip-card:nth-child(2) .back-title { border-bottom-color: rgba(167, 139, 250, 0.3); color: #c4b5fd; }
+  .flip-card:nth-child(3) .back-title { border-bottom-color: rgba(103, 232, 249, 0.3); color: #67e8f9; }
+  .flip-card:nth-child(4) .back-title { border-bottom-color: rgba(253, 230, 138, 0.3); color: #fde68a; }
+  .flip-card:nth-child(5) .back-title { border-bottom-color: rgba(110, 231, 183, 0.3); color: #6ee7b7; }
+  .flip-card:nth-child(6) .back-title { border-bottom-color: rgba(124, 58, 237, 0.3); color: #c4b5fd; }
+
+  /* Pain List (Back) */
+  .pain-list-back { list-style: none; }
+  .pain-list-back li {
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(124, 58, 237, 0.1);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .pain-list-back li:last-child { border-bottom: none; }
+  .pain-list-back .pain-num {
+    background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 10px rgba(124, 58, 237, 0.25);
+  }
+  .pain-list-back .pain-text { flex: 1; font-size: 13px; color: rgba(255,255,255,0.8); }
+  .pain-list-back .pain-count { color: var(--accent); font-weight: 600; font-size: 12px; }
+
+  /* Match List (Back) */
+  .match-list-back { display: grid; gap: 16px; }
+  .match-item-back {
+    background: rgba(30, 30, 55, 0.8);
+    border-radius: 14px;
+    padding: 16px;
+    border-left: 3px solid;
+    border-image: linear-gradient(180deg, var(--primary), var(--secondary)) 1;
+  }
+  .match-item-back h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .match-item-back .req-meta {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 10px;
+    padding: 6px 10px;
+    background: rgba(124, 58, 237, 0.08);
+    border-radius: 6px;
+    display: inline-block;
+  }
+  .match-item-back .pain-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* Full Table (Back) */
+  .full-table { width: 100%; font-size: 12px; }
+  .full-table th {
+    background: rgba(124, 58, 237, 0.15);
+    padding: 10px 8px;
+    font-weight: 600;
+    color: #c4b5fd;
+    text-align: left;
+    border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+    font-size: 10px;
+    text-transform: uppercase;
+  }
+  .full-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid rgba(124, 58, 237, 0.08);
+    color: rgba(255,255,255,0.7);
+  }
+  .full-table tr:hover td { background: rgba(124, 58, 237, 0.05); }
+
+  /* Tags */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 14px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .tag-neg { background: rgba(253, 164, 175, 0.15); color: var(--accent); }
+  .tag-pos { background: rgba(110, 231, 183, 0.15); color: var(--emerald); }
+  .tag-neu { background: rgba(253, 230, 138, 0.15); color: var(--amber); }
+  .tag-match { background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(167, 139, 250, 0.2)); color: #c4b5fd; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 60px 20px;
+    color: rgba(196, 181, 253, 0.4);
+    font-size: 12px;
+    position: relative;
+  }
+
+  .footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    max-width: 400px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.3), transparent);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero-card {
+      width: 92vw;
+      height: 65vh;
+      border-radius: 30px;
+      margin-top: 17.5vh;
+    }
+    .hero-card.collapsed {
+      border-radius: 0 0 30px 30px;
+    }
+    .hero-content h1 { font-size: 22px; }
+    .hero-content p { font-size: 11px; margin-top: 8px; }
+    .pattern-icon { display: none; }
+    .cards-grid { grid-template-columns: 1fr; }
+    .flip-card { height: 380px; }
+    .content { padding: 20px 16px; }
+    .stats-preview { grid-template-columns: repeat(2, 1fr); }
+    .match-preview { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Background Effects -->
+<div class="bg-mesh"></div>
+<div class="glow-orb glow-orb-1"></div>
+<div class="glow-orb glow-orb-2"></div>
+<div class="glow-orb glow-orb-3"></div>
+
+<!-- Floating Particles -->
+<div class="particles">
+  <div class="particle" style="width: 6px; height: 6px; background: var(--primary); left: 5%; animation-duration: 15s;"></div>
+  <div class="particle" style="width: 8px; height: 8px; background: var(--accent); left: 12%; animation-duration: 18s; animation-delay: -2s;"></div>
+  <div class="particle" style="width: 5px; height: 5px; background: var(--cyan); left: 20%; animation-duration: 14s; animation-delay: -4s;"></div>
+  <div class="particle" style="width: 7px; height: 7px; background: var(--secondary); left: 28%; animation-duration: 20s; animation-delay: -6s;"></div>
+  <div class="particle" style="width: 4px; height: 4px; background: var(--amber); left: 35%; animation-duration: 16s; animation-delay: -8s;"></div>
+  <div class="particle" style="width: 9px; height: 9px; background: var(--emerald); left: 42%; animation-duration: 22s; animation-delay: -10s;"></div>
+  <div class="particle" style="width: 5px; height: 5px; background: #fda4af; left: 50%; animation-duration: 13s; animation-delay: -12s;"></div>
+  <div class="particle" style="width: 7px; height: 7px; background: var(--primary); left: 58%; animation-duration: 19s; animation-delay: -3s;"></div>
+  <div class="particle" style="width: 6px; height: 6px; background: var(--accent); left: 65%; animation-duration: 17s; animation-delay: -5s;"></div>
+  <div class="particle" style="width: 8px; height: 8px; background: var(--cyan); left: 72%; animation-duration: 21s; animation-delay: -7s;"></div>
+  <div class="particle" style="width: 4px; height: 4px; background: var(--secondary); left: 80%; animation-duration: 15s; animation-delay: -9s;"></div>
+  <div class="particle" style="width: 6px; height: 6px; background: var(--amber); left: 88%; animation-duration: 23s; animation-delay: -11s;"></div>
+  <div class="particle" style="width: 5px; height: 5px; background: var(--emerald); left: 95%; animation-duration: 12s; animation-delay: -14s;"></div>
+  <div class="particle" style="width: 7px; height: 7px; background: #fda4af; left: 8%; animation-duration: 16s; animation-delay: -1s;"></div>
+  <div class="particle" style="width: 6px; height: 6px; background: var(--primary); left: 25%; animation-duration: 18s; animation-delay: -3s;"></div>
+  <div class="particle" style="width: 8px; height: 8px; background: var(--cyan); left: 45%; animation-duration: 20s; animation-delay: -5s;"></div>
+  <div class="particle" style="width: 5px; height: 5px; background: var(--secondary); left: 62%; animation-duration: 14s; animation-delay: -7s;"></div>
+  <div class="particle" style="width: 7px; height: 7px; background: var(--accent); left: 78%; animation-duration: 19s; animation-delay: -9s;"></div>
+  <div class="particle" style="width: 4px; height: 4px; background: var(--amber); left: 92%; animation-duration: 11s; animation-delay: -13s;"></div>
+</div>
+
+<!-- Cursor Effects -->
+<div class="cursor-follower" id="cursorFollower">
+  <div class="cursor-follower-outer"></div>
+  <div class="cursor-follower-center"></div>
+</div>
+<div class="spotlight" id="spotlight"></div>
+<div id="trailContainer"></div>
+
+<!-- Hero Section -->
+<section class="hero" id="hero">
+  <div class="hero-card" id="heroCard">
+    <!-- Pattern Icons -->
+    <div class="hero-patterns">
+      <!-- User Icon -->
+      <div class="pattern-icon"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+      <!-- Chart Icon -->
+      <div class="pattern-icon"><svg viewBox="0 0 24 24"><path d="M3 13h2v8H3v-8zm4-6h2v14H7V7zm4-4h2v18h-2V3zm4 8h2v10h-2V11zm4-4h2v14h-2V7z"/></svg></div>
+      <!-- Message Icon -->
+      <div class="pattern-icon"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg></div>
+      <!-- Star Icon -->
+      <div class="pattern-icon"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></div>
+      <!-- Heart Icon -->
+      <div class="pattern-icon"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
+      <!-- Pie Chart Icon -->
+      <div class="pattern-icon"><svg viewBox="0 0 24 24"><path d="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"/></svg></div>
+      <!-- Bar Chart Icon -->
+      <div class="pattern-icon"><svg viewBox="0 0 24 24"><path d="M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z"/></svg></div>
+      <!-- Trend Icon -->
+      <div class="pattern-icon"><svg viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg></div>
+      <!-- Settings Icon -->
+      <div class="pattern-icon"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></div>
+      <!-- Database Icon -->
+      <div class="pattern-icon"><svg viewBox="0 0 24 24"><path d="M12 3C7.58 3 4 4.79 4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7c0-2.21-3.58-4-8-4zm0 2c3.87 0 6 1.5 6 2s-2.13 2-6 2-6-1.5-6-2 2.13-2 6-2zm6 12c0 1-.87 2-6 2s-6-1-6-2v-2.23c1.61.73 3.61 1.23 6 1.23s4.39-.5 6-1.23V17zm0-5c0 1-.87 2-6 2s-6-1-6-2V8.77C6.87 9.5 9.39 10 12 10s5.13-.5 6-1.23V12z"/></svg></div>
+      <!-- Bell Icon -->
+      <div class="pattern-icon"><svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg></div>
+      <!-- Eye Icon -->
+      <div class="pattern-icon"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div>
+    </div>
+
+    <div class="hero-content">
+      <h1 data-text="用户反馈与需求分析">用户反馈与需求分析</h1>
+      <p>数据驱动产品优化 · 2024年5月</p>
+    </div>
+
+    <div class="scroll-hint">
+      <div class="scroll-hint-icon"></div>
+      <span>向下滑动</span>
+    </div>
+  </div>
+</section>
+
+<!-- Content Section -->
+<section class="content" id="content">
+  <div class="section-header">
+    <h2>数据分析详情</h2>
+  </div>
+
+  <div class="cards-grid">
+
+    <!-- 情绪分布 -->
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+      <div class="flip-card-inner">
+        <div class="flip-card-front">
+          <div class="card-header">
+            <h3>情绪分布</h3>
+            <div class="flip-hint">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+              点击查看详情
+            </div>
+          </div>
+          <div class="card-body">
+            <canvas id="sentimentChartFront"></canvas>
+          </div>
+        </div>
+        <div class="flip-card-back">
+          <div class="back-title">情绪分布 - 详细分析</div>
+          <div class="stats-preview">
+            <div class="stat-preview-item">
+              <div class="stat-preview-num">16</div>
+              <div class="stat-preview-label">负面反馈</div>
+            </div>
+            <div class="stat-preview-item">
+              <div class="stat-preview-num">6</div>
+              <div class="stat-preview-label">正面反馈</div>
+            </div>
+            <div class="stat-preview-item">
+              <div class="stat-preview-num">3</div>
+              <div class="stat-preview-label">中性反馈</div>
+            </div>
+          </div>
+          <p style="margin-top: 20px; font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.6;">
+            负面反馈占比64%，主要集中在新用户注册体验和付费功能问题上。正面反馈占比24%，用户对产品核心功能较为认可。
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 用户类型分布 -->
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+      <div class="flip-card-inner">
+        <div class="flip-card-front">
+          <div class="card-header">
+            <h3>用户类型分布</h3>
+            <div class="flip-hint">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+              点击查看详情
+            </div>
+          </div>
+          <div class="card-body">
+            <canvas id="userTypeChartFront"></canvas>
+          </div>
+        </div>
+        <div class="flip-card-back">
+          <div class="back-title">用户类型分布 - 详细分析</div>
+          <ul class="pain-list-back" style="font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.8;">
+            <li><span class="pain-num" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">新</span><span>新用户反馈最多(8条)，主要问题集中在注册流程和初始体验</span></li>
+            <li><span class="pain-num" style="background: linear-gradient(135deg, #8b5cf6, #f472b6);">核</span><span>核心用户(6条)反馈较为专业，关注性能和新功能需求</span></li>
+            <li><span class="pain-num" style="background: linear-gradient(135deg, #f472b6, #fb7185);">付</span><span>付费用户(7条)反馈涉及会员权益和续费问题</span></li>
+            <li><span class="pain-num" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);">普</span><span>普通用户(4条)反馈较为分散，功能建议居多</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 反馈来源分析 -->
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+      <div class="flip-card-inner">
+        <div class="flip-card-front">
+          <div class="card-header">
+            <h3>反馈来源分析</h3>
+            <div class="flip-hint">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+              点击查看详情
+            </div>
+          </div>
+          <div class="card-body">
+            <canvas id="sourceChartFront"></canvas>
+          </div>
+        </div>
+        <div class="flip-card-back">
+          <div class="back-title">反馈来源 - 渠道详情</div>
+          <div style="font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.8;">
+            <p><strong style="color: var(--cyan);">App Store 评论 (10条)</strong><br>用户主动评价，反映真实使用体验</p>
+            <p style="margin-top: 12px;"><strong style="color: var(--accent);">客服工单 (8条)</strong><br>付费用户为主，问题较为紧急</p>
+            <p style="margin-top: 12px;"><strong style="color: var(--secondary);">用户访谈 (7条)</strong><br>深度交流，洞察潜在需求</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 高频问题 -->
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+      <div class="flip-card-inner">
+        <div class="flip-card-front">
+          <div class="card-header">
+            <h3>高频问题 TOP 6</h3>
+            <div class="flip-hint">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+              点击查看详情
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="pain-preview">
+              <div class="pain-preview-item"><span class="pain-preview-num">1</span><span class="pain-preview-text">注册/登录体验差</span><span class="pain-preview-count">3条</span></div>
+              <div class="pain-preview-item"><span class="pain-preview-num">2</span><span class="pain-preview-text">界面/导航不清晰</span><span class="pain-preview-count">2条</span></div>
+              <div class="pain-preview-item"><span class="pain-preview-num">3</span><span class="pain-preview-text">加载速度慢</span><span class="pain-preview-count">2条</span></div>
+              <div class="pain-preview-item"><span class="pain-preview-num">4</span><span class="pain-preview-text">会员/付费问题</span><span class="pain-preview-count">2条</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="flip-card-back">
+          <div class="back-title">高频问题 - 完整列表</div>
+          <ul class="pain-list-back">
+            <li><span class="pain-num">1</span><span class="pain-text">注册/登录体验差（转圈、频繁登录）</span><span class="pain-count">3条</span></li>
+            <li><span class="pain-num">2</span><span class="pain-text">界面/导航不清晰（找不到功能）</span><span class="pain-count">2条</span></li>
+            <li><span class="pain-num">3</span><span class="pain-text">加载速度慢</span><span class="pain-count">2条</span></li>
+            <li><span class="pain-num">4</span><span class="pain-text">会员/付费问题</span><span class="pain-count">2条</span></li>
+            <li><span class="pain-num">5</span><span class="pain-text">通知骚扰</span><span class="pain-count">1条</span></li>
+            <li><span class="pain-num">6</span><span class="pain-text">iPad布局错乱</span><span class="pain-count">1条</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 需求与痛点匹配 -->
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+      <div class="flip-card-inner">
+        <div class="flip-card-front">
+          <div class="card-header">
+            <h3>需求与痛点匹配</h3>
+            <div class="flip-hint">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+              点击查看详情
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="match-preview">
+              <div class="match-preview-item">
+                <h4>黑暗模式 <span class="tag tag-match">匹配</span></h4>
+                <p style="font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 4px;">App Store x43</p>
+              </div>
+              <div class="match-preview-item">
+                <h4>Excel 导入 <span class="tag tag-match">匹配</span></h4>
+                <p style="font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 4px;">客服工单 x18</p>
+              </div>
+              <div class="match-preview-item">
+                <h4>团队协作 <span class="tag tag-match">匹配</span></h4>
+                <p style="font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 4px;">客服工单 x27</p>
+              </div>
+              <div class="match-preview-item">
+                <h4>新手引导 <span class="tag tag-match">匹配</span></h4>
+                <p style="font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 4px;">留存仅21%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flip-card-back">
+          <div class="back-title">需求与痛点匹配 - 全部详情</div>
+          <div class="match-list-back">
+            <div class="match-item-back">
+              <h4>黑暗模式 <span class="tag tag-match">匹配</span></h4>
+              <div class="req-meta">需求5 未评估 | App Store评论 x43 + 用户访谈 x6</div>
+              <div class="pain-tags">
+                <span class="tag tag-neg">负面：眼睛受不了</span>
+                <span class="tag tag-neu">中性：期待已久</span>
+              </div>
+            </div>
+            <div class="match-item-back">
+              <h4>Excel 导入 <span class="tag tag-match">匹配</span></h4>
+              <div class="req-meta">需求2 技术评估中 | 客服工单 x18</div>
+              <div class="pain-tags"><span class="tag tag-neg">负面：每次都要手动录入</span></div>
+            </div>
+            <div class="match-item-back">
+              <h4>团队版 / 多人协作 <span class="tag tag-match">匹配</span></h4>
+              <div class="req-meta">需求3 规划中 | 客服工单 x27</div>
+              <div class="pain-tags"><span class="tag tag-pos">正面：希望出团队版</span></div>
+            </div>
+            <div class="match-item-back">
+              <h4>新手引导流程 <span class="tag tag-match">匹配</span></h4>
+              <div class="req-meta">需求7 设计已出稿 | 留存仅21%</div>
+              <div class="pain-tags">
+                <span class="tag tag-neg">负面：完全靠自己摸索</span>
+                <span class="tag tag-neg">负面：不知道该点哪里</span>
+              </div>
+            </div>
+            <div class="match-item-back">
+              <h4>用户上传模板 <span class="tag tag-match">匹配</span></h4>
+              <div class="req-meta">需求4 未评估 | 核心用户访谈 x4</div>
+              <div class="pain-tags"><span class="tag tag-pos">正面：模板太少了</span></div>
+            </div>
+            <div class="match-item-back">
+              <h4>版本历史 / 协作冲突 <span class="tag tag-match">匹配</span></h4>
+              <div class="req-meta">需求5 已确认高优bug</div>
+              <div class="pain-tags"><span class="tag tag-neg">负面：同时编辑冲突</span></div>
+            </div>
+            <div class="match-item-back">
+              <h4>推送通知治理 <span class="tag tag-match">匹配</span></h4>
+              <div class="req-meta">需求8 方案讨论中</div>
+              <div class="pain-tags"><span class="tag tag-neg">负面：一天二十几条已关闭通知</span></div>
+            </div>
+            <div class="match-item-back">
+              <h4>API 开放 <span class="tag tag-match">匹配</span></h4>
+              <div class="req-meta">需求6 提案阶段 | 客服工单 x9</div>
+              <div class="pain-tags"><span class="tag tag-pos">正面：希望有API接入</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 原始反馈明细 -->
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+      <div class="flip-card-inner">
+        <div class="flip-card-front">
+          <div class="card-header">
+            <h3>原始反馈明细</h3>
+            <div class="flip-hint">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+              点击查看详情
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-preview">
+              <div class="table-preview-header">
+                <span>反馈内容</span>
+                <span>用户类型</span>
+                <span>情绪</span>
+              </div>
+              <div class="table-preview-row"><span>注册一直转圈...</span><span>新用户</span><span class="tag tag-neg">负面</span></div>
+              <div class="table-preview-row"><span>希望出团队版...</span><span>付费用户</span><span class="tag tag-pos">正面</span></div>
+              <div class="table-preview-row"><span>通知太多了...</span><span>普通用户</span><span class="tag tag-neg">负面</span></div>
+              <div class="table-preview-row"><span>五星好评！...</span><span>新用户</span><span class="tag tag-pos">正面</span></div>
+            </div>
+            <p style="margin-top: 16px; font-size: 12px; color: rgba(255,255,255,0.4);">共 25 条反馈，点击查看全部</p>
+          </div>
+        </div>
+        <div class="flip-card-back">
+          <div class="back-title">原始反馈明细 - 全部 25 条</div>
+          <div style="max-height: 500px; overflow-y: auto;">
+            <table class="full-table">
+              <thead>
+                <tr><th>来源</th><th>日期</th><th>用户</th><th>反馈</th><th>情绪</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>App Store</td><td>05-03</td><td>新用户</td><td>注册一直转圈</td><td><span class="tag tag-neg">负面</span></td></tr>
+                <tr><td>App Store</td><td>05-04</td><td>新用户</td><td>不知道该点哪里</td><td><span class="tag tag-neg">负面</span></td></tr>
+                <tr><td>客服</td><td>05-04</td><td>付费</td><td>导出功能异常</td><td><span class="tag tag-neg">负面</span></td></tr>
+                <tr><td>访谈</td><td>05-05</td><td>核心</td><td>每次都要重登录</td><td><span class="tag tag-neg">负面</span></td></tr>
+                <tr><td>App Store</td><td>05-06</td><td>新用户</td><td>找不到邀请同事</td><td><span class="tag tag-neu">中性</span></td></tr>
+                <tr><td>访谈</td><td>05-07</td><td>核心</td><td>版本比之前慢</td><td><span class="tag tag-neg">负面</span></td></tr>
+                <tr><td>客服</td><td>05-07</td><td>付费</td><td>希望出团队版</td><td><span class="tag tag-pos">正面</span></td></tr>
+                <tr><td>App Store</td><td>05-08</td><td>普通</td><td>通知太多了</td><td><span class="tag tag-neg">负面</span></td></tr>
+                <tr><td>访谈</td><td>05-09</td><td>核心</td><td>分享链接打不开</td><td><span class="tag tag-neg">负面</span></td></tr>
+                <tr><td>App Store</td><td>05-10</td><td>新用户</td><td>五星好评！</td><td><span class="tag tag-pos">正面</span></td></tr>
+                <tr><td>客服</td><td>05-10</td><td>付费</td><td>续费页面崩溃</td><td><span class="tag tag-neg">负面</span></td></tr>
+                <tr><td>访谈</td><td>05-11</td><td>普通</td><td>希望支持Excel</td><td><span class="tag tag-pos">正面</span></td></tr>
+                <tr><td>App Store</td><td>05-12</td><td>新用户</td><td>免费限制太多</td><td><span class="tag tag-neg">负面</span></td></tr>
+                <tr><td>客服</td><td>05-13</td><td>付费</td><td>iPad布局错乱</td><td><span class="tag tag-neg">负面</span></td></tr>
+                <tr><td>访谈</td><td>05-14</td><td>核心</td><td>希望按时间排序</td><td><span class="tag tag-pos">正面</span></td></tr>
+                <tr><td>App Store</td><td>05-15</td><td>普通</td><td>黑暗模式期待</td><td><span class="tag tag-neu">中性</span></td></tr>
+                <tr><td>客服</td><td>05-16</td><td>新用户</td><td>功能与宣传不符</td><td><span class="tag tag-neg">负面</span></td></tr>
+                <tr><td>访谈</td><td>05-17</td><td>核心</td><td>模板太少了</td><td><span class="tag tag-pos">正面</span></td></tr>
+                <tr><td>App Store</td><td>05-18</td><td>付费</td><td>更新后数据丢失</td><td><span class="tag tag-neg">负面</span></td></tr>
+                <tr><td>访谈</td><td>05-19</td><td>普通</td><td>没有新手引导</td><td><span class="tag tag-neg">负面</span></td></tr>
+                <tr><td>客服</td><td>05-20</td><td>付费</td><td>希望出API</td><td><span class="tag tag-pos">正面</span></td></tr>
+                <tr><td>App Store</td><td>05-21</td><td>新用户</td><td>加载速度慢</td><td><span class="tag tag-neg">负面</span></td></tr>
+                <tr><td>访谈</td><td>05-22</td><td>核心</td><td>编辑冲突问题</td><td><span class="tag tag-neg">负面</span></td></tr>
+                <tr><td>客服</td><td>05-23</td><td>普通</td><td>账号数据迁移</td><td><span class="tag tag-neu">中性</span></td></tr>
+                <tr><td>App Store</td><td>05-24</td><td>付费</td><td>续费涨价无通知</td><td><span class="tag tag-neg">负面</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="footer">由 Claude Code 自动生成 · 数据分析时间：2024年5月</div>
+
+<script>
+// ============================================
+// Cursor Follower & Trail Effects
+// ============================================
+const cursorFollower = document.getElementById('cursorFollower');
+const spotlight = document.getElementById('spotlight');
+const trailContainer = document.getElementById('trailContainer');
+let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+let followerX = mouseX, followerY = mouseY;
+let spotX = mouseX, spotY = mouseY;
+let lastTrailTime = 0;
+let lastMouseMoveTime = Date.now();
+const trailColors = ['#7c3aed', '#a78bfa', '#f0abfc', '#67e8f9', '#fde68a', '#6ee7b7', '#fda4af'];
+
+// Initialize cursor as visible
+cursorFollower.classList.add('active');
+spotlight.style.left = mouseX + 'px';
+spotlight.style.top = mouseY + 'px';
+
+document.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+  lastMouseMoveTime = Date.now();
+});
+
+document.addEventListener('mouseenter', () => {
+  cursorFollower.classList.add('active');
+});
+
+document.addEventListener('mouseleave', () => {
+  cursorFollower.classList.remove('active');
+});
+
+// Smooth cursor follower animation - fast follow
+function animateFollower() {
+  followerX += (mouseX - followerX) * 0.3;
+  followerY += (mouseY - followerY) * 0.3;
+  cursorFollower.style.left = followerX + 'px';
+  cursorFollower.style.top = followerY + 'px';
+  requestAnimationFrame(animateFollower);
+}
+animateFollower();
+
+// Fast spotlight follow
+function animateSpotlight() {
+  spotX += (mouseX - spotX) * 0.25;
+  spotY += (mouseY - spotY) * 0.25;
+  spotlight.style.left = spotX + 'px';
+  spotlight.style.top = spotY + 'px';
+  requestAnimationFrame(animateSpotlight);
+}
+animateSpotlight();
+
+// Continuous trail particles - high frequency
+function emitTrailParticles() {
+  const now = Date.now();
+  const timeSinceMove = now - lastMouseMoveTime;
+
+  // Emit multiple particles, more when moving fast
+  const emitCount = timeSinceMove < 100 ? 3 : (timeSinceMove < 200 ? 2 : 1);
+
+  for (let i = 0; i < emitCount; i++) {
+    if (now - lastTrailTime > 10) { // Very high frequency ~100fps
+      createTrailParticle(mouseX, mouseY);
+      lastTrailTime = now;
+    }
+  }
+
+  requestAnimationFrame(emitTrailParticles);
+}
+emitTrailParticles();
+
+// Create trail particle with glow
+let particleId = 0;
+function createTrailParticle(x, y) {
+  const particle = document.createElement('div');
+  particle.className = 'trail-particle';
+  const color = trailColors[Math.floor(Math.random() * trailColors.length)];
+
+  const offsetX = (Math.random() - 0.5) * 30;
+  const offsetY = (Math.random() - 0.5) * 30;
+  const size = 8 + Math.random() * 12;
+
+  particle.style.left = (x + offsetX) + 'px';
+  particle.style.top = (y + offsetY) + 'px';
+  particle.style.width = size + 'px';
+  particle.style.height = size + 'px';
+  particle.style.background = `radial-gradient(circle, ${color}, transparent 70%)`;
+  particle.style.boxShadow = `0 0 20px ${color}, 0 0 40px ${color}80`;
+
+  trailContainer.appendChild(particle);
+  setTimeout(() => particle.remove(), 600);
+}
+
+// Ambient particles when cursor is idle
+setInterval(() => {
+  const timeSinceMove = Date.now() - lastMouseMoveTime;
+  if (timeSinceMove > 300) {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 40 + Math.random() * 60;
+    const x = mouseX + Math.cos(angle) * distance;
+    const y = mouseY + Math.sin(angle) * distance;
+    createTrailParticle(x, y);
+  }
+}, 50); // Frequent ambient particles
+
+// Click sparkle effect - enhanced
+document.addEventListener('click', (e) => {
+  // Burst particles
+  for (let i = 0; i < 20; i++) {
+    const sparkle = document.createElement('div');
+    const color = trailColors[Math.floor(Math.random() * trailColors.length)];
+    sparkle.style.cssText = `
+      position: fixed;
+      left: ${e.clientX}px;
+      top: ${e.clientY}px;
+      width: 10px;
+      height: 10px;
+      background: ${color};
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      box-shadow: 0 0 20px ${color}, 0 0 40px ${color};
+    `;
+
+    const angle = (i / 20) * Math.PI * 2 + Math.random() * 0.4;
+    const velocity = 100 + Math.random() * 100;
+    const dx = Math.cos(angle) * velocity;
+    const dy = Math.sin(angle) * velocity;
+
+    sparkle.animate([
+      { transform: 'translate(-50%, -50%) scale(2)', opacity: 1 },
+      { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0)`, opacity: 0 }
+    ], {
+      duration: 800,
+      easing: 'cubic-bezier(0, 0.5, 0.5, 1)'
+    });
+
+    document.body.appendChild(sparkle);
+    setTimeout(() => sparkle.remove(), 800);
+  }
+
+  // Expanding ring
+  const ring = document.createElement('div');
+  ring.style.cssText = `
+    position: fixed;
+    left: ${e.clientX}px;
+    top: ${e.clientY}px;
+    width: 60px;
+    height: 60px;
+    border: 4px solid #7c3aed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10000;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 30px #7c3aed, inset 0 0 30px #7c3aed50;
+  `;
+  ring.animate([
+    { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
+    { transform: 'translate(-50%, -50%) scale(5)', opacity: 0 }
+  ], {
+    duration: 600,
+    easing: 'ease-out'
+  });
+  document.body.appendChild(ring);
+  setTimeout(() => ring.remove(), 600);
+});
+
+// Hero Card Scroll Animation - Smooth sticky collapse
+const heroCard = document.getElementById('heroCard');
+let lastScrollY = 0;
+let scrollTimeout;
+
+window.addEventListener('scroll', () => {
+  const scrollY = window.scrollY;
+  const heroHeight = window.innerHeight;
+
+  // Collapse hero card as user scrolls down - smooth transition
+  if (scrollY > heroHeight * 0.4) {
+    heroCard.classList.add('collapsed');
+  } else {
+    heroCard.classList.remove('collapsed');
+  }
+
+  lastScrollY = scrollY;
+});
+
+// Charts
+Chart.defaults.color = 'rgba(255,255,255,0.7)';
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.padding = 16;
+
+// Sentiment Chart
+new Chart(document.getElementById('sentimentChartFront'), {
+  type: 'doughnut',
+  data: {
+    labels: ['负面', '正面', '中性'],
+    datasets: [{
+      data: [16, 6, 3],
+      backgroundColor: ['rgba(253, 164, 175, 0.9)', 'rgba(110, 231, 183, 0.9)', 'rgba(253, 230, 138, 0.9)'],
+      borderWidth: 0,
+      hoverOffset: 12
+    }]
+  },
+  options: {
+    responsive: true,
+    cutout: '60%',
+    plugins: {
+      legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyle: 'circle' } }
+    },
+    animation: { animateRotate: true, animateScale: true, duration: 1500 }
+  }
+});
+
+// User Type Chart
+new Chart(document.getElementById('userTypeChartFront'), {
+  type: 'bar',
+  data: {
+    labels: ['新用户', '核心用户', '付费用户', '普通用户'],
+    datasets: [{
+      data: [8, 6, 7, 4],
+      backgroundColor: ['rgba(124, 58, 237, 0.85)', 'rgba(167, 139, 250, 0.85)', 'rgba(240, 171, 252, 0.85)', 'rgba(253, 230, 138, 0.85)'],
+      hoverBackgroundColor: ['rgba(124, 58, 237, 1)', 'rgba(167, 139, 250, 1)', 'rgba(240, 171, 252, 1)', 'rgba(253, 230, 138, 1)'],
+      borderRadius: 8,
+      borderSkipped: false,
+      barThickness: 32
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    animation: { duration: 1200, delay: (ctx) => ctx.dataIndex * 100 },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(124, 58, 237, 0.1)' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// Source Chart
+new Chart(document.getElementById('sourceChartFront'), {
+  type: 'polarArea',
+  data: {
+    labels: ['App Store', '客服工单', '用户访谈'],
+    datasets: [{
+      data: [10, 8, 7],
+      backgroundColor: ['rgba(103, 232, 249, 0.8)', 'rgba(240, 171, 252, 0.8)', 'rgba(167, 139, 250, 0.8)'],
+      borderWidth: 0
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'bottom', labels: { padding: 14, usePointStyle: true } } },
+    animation: { duration: 1200 },
+    scales: {
+      r: { grid: { color: 'rgba(124, 58, 237, 0.1)' }, ticks: { display: false } }
+    }
+  }
+});
+</script>
+</body>
+</html>

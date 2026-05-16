@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>赛博朋克碎片</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      overflow: hidden;
+      background: #050510;
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    }
+    #canvas-container {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+    }
+    #info {
+      position: fixed;
+      bottom: 20px; left: 20px;
+      color: #00ffff;
+      font-size: 12px;
+      opacity: 0.7;
+      pointer-events: none;
+      text-shadow: 0 0 10px #00ffff;
+      z-index: 100;
+      line-height: 1.8;
+    }
+    #info span {
+      color: #ff00ff;
+      font-weight: bold;
+    }
+    .loading {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: #00ffff;
+      font-size: 18px;
+      text-shadow: 0 0 20px #00ffff;
+      z-index: 1000;
+    }
+    #error {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ff4444;
+      font-size: 14px;
+      display: none;
+      z-index: 2000;
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas-container"></div>
+  <div id="info">
+    <span>空格</span> 触发变换 | <span>1-6</span> 切换几何体 | <span>R</span> 重置 | 拖拽旋转
+  </div>
+  <div class="loading" id="loading">正在初始化...</div>
+  <div id="error"></div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+    import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+    import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+    import GUI from 'three/addons/libs/lil-gui.module.min.js';
+
+    const PARTICLE_COUNT = 80000;
+    const TRANSITION_DURATION = 3.0;
+    const MOUSE_INFLUENCE_RADIUS = 5.0;
+    const MOUSE_STRENGTH = 0.15;
+    const SPRING_STRENGTH = 0.018;
+    const DAMPING = 0.94;
+
+    const PALETTE = {
+      cyan: 0x00ffff,
+      magenta: 0xff00ff,
+      yellow: 0xffff00,
+      orange: 0xff6600,
+      deepBlue: 0x0a0a1f,
+      purple: 0x1a0a2e,
+      nightBlue: 0x050515,
+      white: 0xffffff,
+      paleBlue: 0xaaddff
+    };
+
+    let scene, camera, renderer, composer, controls;
+    let particleSystem, phases;
+    let bloomPassCore, bloomPassBleed;
+    let mouse = new THREE.Vector2();
+    let mouse3D = new THREE.Vector3();
+    let raycaster = new THREE.Raycaster();
+    let clock = new THREE.Clock();
+    let mouseParticles;
+    let mouseTrail = [];
+    let transitionFlash = 0;
+    let transitionExplosion = 0;
+    let ambientParticles;
+
+    const params = {
+      bloomStrength: 0.8,
+      particleCount: PARTICLE_COUNT,
+      transitionSpeed: TRANSITION_DURATION,
+      mouseInfluence: MOUSE_STRENGTH,
+      autoRotate: true
+    };
+
+    function createGeometries() {
+      return [
+        { geo: new THREE.BoxGeometry(6, 8, 6), name: '方块' },
+        { geo: new THREE.IcosahedronGeometry(5, 1), name: '球体' },
+        { geo: new THREE.TorusKnotGeometry(3, 0.8, 100, 16, 2, 3), name: '环形结' },
+        { geo: new THREE.OctahedronGeometry(5), name: '八面体' },
+        { geo: new THREE.TorusGeometry(4, 1.5, 32, 64), name: '圆环' },
+        { geo: new THREE.EdgesGeometry(new THREE.BoxGeometry(7, 9, 7)), name: '线框' }
+      ];
+    }
+
+    function sampleGeometry(geometry, count) {
+      const positions = new Float32Array(count * 3);
+      const posAttr = geometry.getAttribute('position');
+      const tempVec = new THREE.Vector3();
+
+      if (!posAttr) {
+        for (let i = 0; i < count; i++) {
+          const theta = Math.random() * Math.PI * 2;
+          const phi = Math.acos(2 * Math.random() - 1);
+          const r = 4 * Math.cbrt(Math.random());
+          positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+          positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+          positions[i * 3 + 2] = r * Math.cos(phi);
+        }
+        return positions;
+      }
+
+      const indices = geometry.index ? Array.from(geometry.index.array) : null;
+      const totalVerts = posAttr.count;
+
+      for (let i = 0; i < count; i++) {
+        const idx = indices && indices.length > 0
+          ? indices[Math.floor(Math.random() * indices.length)]
+          : Math.floor(Math.random() * totalVerts);
+        tempVec.fromBufferAttribute(posAttr, idx);
+        positions[i * 3] = tempVec.x;
+        positions[i * 3 + 1] = tempVec.y;
+        positions[i * 3 + 2] = tempVec.z;
+      }
+      return positions;
+    }
+
+    function createParticleSystem(geometryDataList) {
+      const count = params.particleCount;
+      const geometryCount = geometryDataList.length;
+
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+      const sizes = new Float32Array(count);
+      phases = new Float32Array(count);
+      const velocities = new Float32Array(count * 3);
+
+      const allSamplePositions = geometryDataList.map(g => sampleGeometry(g.geo, count));
+
+      const colorCyan = new THREE.Color(PALETTE.cyan);
+      const colorMagenta = new THREE.Color(PALETTE.magenta);
+      const colorOrange = new THREE.Color(PALETTE.orange);
+
+      for (let i = 0; i < count; i++) {
+        positions[i * 3] = allSamplePositions[0][i * 3];
+        positions[i * 3 + 1] = allSamplePositions[0][i * 3 + 1];
+        positions[i * 3 + 2] = allSamplePositions[0][i * 3 + 2];
+
+        velocities[i * 3] = 0;
+        velocities[i * 3 + 1] = 0;
+        velocities[i * 3 + 2] = 0;
+
+        const colorMix = Math.random();
+        const baseColor = new THREE.Color();
+        if (colorMix < 0.5) {
+          baseColor.lerpColors(colorCyan, colorMagenta, colorMix * 2);
+        } else {
+          baseColor.lerpColors(colorMagenta, colorOrange, (colorMix - 0.5) * 2);
+        }
+        colors[i * 3] = baseColor.r;
+        colors[i * 3 + 1] = baseColor.g;
+        colors[i * 3 + 2] = baseColor.b;
+
+        sizes[i] = 0.02 + Math.random() * 0.06;
+        phases[i] = Math.random();
+      }
+
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+      geometry.setAttribute('phase', new THREE.BufferAttribute(phases, 1));
+
+      const material = new THREE.ShaderMaterial({
+        uniforms: {
+          time: { value: 0 },
+          pixelRatio: { value: renderer.getPixelRatio() }
+        },
+        vertexShader: `
+          attribute float size;
+          attribute float phase;
+          attribute vec3 color;
+          varying vec3 vColor;
+          varying float vPhase;
+          uniform float time;
+          uniform float pixelRatio;
+
+          void main() {
+            vColor = color;
+            vPhase = phase;
+
+            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+            gl_PointSize = size * pixelRatio * (300.0 / -mvPosition.z);
+            gl_Position = projectionMatrix * mvPosition;
+          }
+        `,
+        fragmentShader: `
+          varying vec3 vColor;
+          varying float vPhase;
+
+          void main() {
+            vec2 center = gl_PointCoord - vec2(0.5);
+            float dist = length(center);
+
+            if (dist > 0.5) discard;
+
+            float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
+            alpha = pow(alpha, 1.5);
+
+            float core = 1.0 - smoothstep(0.0, 0.15, dist);
+
+            vec3 finalColor = vColor + vec3(core * 0.3);
+
+            gl_FragColor = vec4(finalColor, alpha);
+          }
+        `,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+
+      const points = new THREE.Points(geometry, material);
+      scene.add(points);
+
+      return {
+        mesh: points,
+        geometry,
+        material,
+        allSamplePositions,
+        velocities,
+        geometryCount
+      };
+    }
+
+    // 创建鼠标光效
+    function createMouseEffects() {
+      // 鼠标拖尾粒子 - 只有这个
+      const trailCount = 20;
+      const trailGeo = new THREE.BufferGeometry();
+      const trailPositions = new Float32Array(trailCount * 3);
+      const trailSizes = new Float32Array(trailCount);
+      const trailAlphas = new Float32Array(trailCount);
+      trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
+      trailGeo.setAttribute('size', new THREE.BufferAttribute(trailSizes, 1));
+      trailGeo.setAttribute('alpha', new THREE.BufferAttribute(trailAlphas, 1));
+
+      const trailMat = new THREE.ShaderMaterial({
+        uniforms: {
+          color: { value: new THREE.Color(0x00ffff) }
+        },
+        vertexShader: `
+          attribute float size;
+          attribute float alpha;
+          varying float vAlpha;
+          void main() {
+            vAlpha = alpha;
+            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+            gl_PointSize = size * (200.0 / -mvPosition.z);
+            gl_Position = projectionMatrix * mvPosition;
+          }
+        `,
+        fragmentShader: `
+          uniform vec3 color;
+          varying float vAlpha;
+          void main() {
+            vec2 center = gl_PointCoord - vec2(0.5);
+            float dist = length(center);
+            if (dist > 0.5) discard;
+            float alpha = (1.0 - dist * 2.0) * vAlpha;
+            gl_FragColor = vec4(color, alpha);
+          }
+        `,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+
+      mouseParticles = new THREE.Points(trailGeo, trailMat);
+      mouseParticles.visible = false;
+      scene.add(mouseParticles);
+
+      // 初始化拖尾数据
+      for (let i = 0; i < trailCount; i++) {
+        mouseTrail.push({
+          position: new THREE.Vector3(0, 0, -100),
+          velocity: new THREE.Vector3(0, 0, 0),
+          life: 0
+        });
+      }
+    }
+
+    // 创建背景氛围粒子
+    function createAmbientParticles() {
+      const count = 500;
+      const geo = new THREE.BufferGeometry();
+      const positions = new Float32Array(count * 3);
+      const sizes = new Float32Array(count);
+      const alphas = new Float32Array(count);
+
+      for (let i = 0; i < count; i++) {
+        positions[i * 3] = (Math.random() - 0.5) * 40;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 40;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 30 - 10;
+        sizes[i] = 0.5 + Math.random() * 1.5;
+        alphas[i] = 0.02 + Math.random() * 0.05;
+      }
+
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+      geo.setAttribute('alpha', new THREE.BufferAttribute(alphas, 1));
+
+      const mat = new THREE.ShaderMaterial({
+        uniforms: {
+          time: { value: 0 },
+          color: { value: new THREE.Color(0x334466) }
+        },
+        vertexShader: `
+          attribute float size;
+          attribute float alpha;
+          varying float vAlpha;
+          uniform float time;
+          void main() {
+            vAlpha = alpha;
+            vec3 pos = position;
+            pos.y += sin(time * 0.2 + position.x * 0.1) * 0.3;
+            pos.x += sin(time * 0.15 + position.y * 0.1) * 0.2;
+            vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+            gl_PointSize = size * (400.0 / -mvPosition.z);
+            gl_Position = projectionMatrix * mvPosition;
+          }
+        `,
+        fragmentShader: `
+          uniform vec3 color;
+          varying float vAlpha;
+          void main() {
+            vec2 center = gl_PointCoord - vec2(0.5);
+            float dist = length(center);
+            if (dist > 0.5) discard;
+            float alpha = (1.0 - dist * 2.0) * vAlpha;
+            gl_FragColor = vec4(color, alpha);
+          }
+        `,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+
+      ambientParticles = new THREE.Points(geo, mat);
+      scene.add(ambientParticles);
+    }
+
+    // 更新背景氛围粒子
+    function updateAmbientParticles(elapsedTime) {
+      if (ambientParticles) {
+        ambientParticles.material.uniforms.time.value = elapsedTime;
+      }
+    }
+
+    // 更新鼠标光效
+    function updateMouseEffects(elapsedTime) {
+      if (!mouseParticles) return;
+
+      const trailPositions = mouseParticles.geometry.getAttribute('position');
+      const trailSizes = mouseParticles.geometry.getAttribute('size');
+      const trailAlphas = mouseParticles.geometry.getAttribute('alpha');
+
+      // 移动现有拖尾粒子
+      for (let i = mouseTrail.length - 1; i > 0; i--) {
+        const p = mouseTrail[i];
+        if (p.life > 0) {
+          p.life -= 0.02;
+          p.position.add(p.velocity.clone().multiplyScalar(0.95));
+
+          // 衰减
+          trailPositions.array[i * 3] = p.position.x;
+          trailPositions.array[i * 3 + 1] = p.position.y;
+          trailPositions.array[i * 3 + 2] = p.position.z;
+          trailSizes.array[i] = 0.03 * p.life;
+          trailAlphas.array[i] = p.life * 0.3;
+        } else {
+          trailPositions.array[i * 3] = 0;
+          trailPositions.array[i * 3 + 1] = 0;
+          trailPositions.array[i * 3 + 2] = -100;
+          trailSizes.array[i] = 0;
+          trailAlphas.array[i] = 0;
+        }
+      }
+
+      // 将鼠标位置添加到拖尾开头
+      if (mouseParticles.visible) {
+        const first = mouseTrail[0];
+        first.position.copy(mouse3D);
+        first.velocity.set(
+          (Math.random() - 0.5) * 0.02,
+          (Math.random() - 0.5) * 0.02,
+          (Math.random() - 0.5) * 0.02
+        );
+        first.life = 1.0;
+
+        trailPositions.array[0] = mouse3D.x;
+        trailPositions.array[1] = mouse3D.y;
+        trailPositions.array[2] = mouse3D.z;
+        trailSizes.array[0] = 0.05;
+        trailAlphas.array[0] = 0.5;
+      }
+
+      trailPositions.needsUpdate = true;
+      trailSizes.needsUpdate = true;
+      trailAlphas.needsUpdate = true;
+
+      // 形状切换闪光和爆炸
+      if (transitionFlash > 0) {
+        transitionFlash -= 0.03;
+      }
+      if (transitionExplosion > 0) {
+        transitionExplosion -= 0.03;
+      }
+    }
+
+    function updateParticles(deltaTime, elapsedTime) {
+      const positions = particleSystem.geometry.getAttribute('position');
+      const colors = particleSystem.geometry.getAttribute('color');
+      const velocities = particleSystem.velocities;
+
+      const count = params.particleCount;
+      const geomCount = particleSystem.geometryCount;
+      const samplePositions = particleSystem.allSamplePositions;
+
+      const transitionDuration = params.transitionSpeed;
+      const cycleTime = transitionDuration * geomCount;
+      const globalProgress = (elapsedTime % cycleTime) / transitionDuration;
+
+      const colorCyan = new THREE.Color(PALETTE.cyan);
+      const colorMagenta = new THREE.Color(PALETTE.magenta);
+      const colorOrange = new THREE.Color(PALETTE.orange);
+
+      for (let i = 0; i < count; i++) {
+        const i3 = i * 3;
+
+        const phaseAdjustedProgress = globalProgress + phases[i] * 0.3;
+        const currentGeomIndex = Math.floor(phaseAdjustedProgress) % geomCount;
+        const nextGeomIndex = (currentGeomIndex + 1) % geomCount;
+        const localProgress = (phaseAdjustedProgress % 1.0);
+
+        const t = localProgress;
+        const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+        const currentSamples = samplePositions[currentGeomIndex];
+        const nextSamples = samplePositions[nextGeomIndex];
+
+        const targetX = currentSamples[i3] + (nextSamples[i3] - currentSamples[i3]) * ease;
+        const targetY = currentSamples[i3 + 1] + (nextSamples[i3 + 1] - currentSamples[i3 + 1]) * ease;
+        const targetZ = currentSamples[i3 + 2] + (nextSamples[i3 + 2] - currentSamples[i3 + 2]) * ease;
+
+        let vx = velocities[i3];
+        let vy = velocities[i3 + 1];
+        let vz = velocities[i3 + 2];
+
+        vx += (targetX - positions.array[i3]) * SPRING_STRENGTH;
+        vy += (targetY - positions.array[i3 + 1]) * SPRING_STRENGTH;
+        vz += (targetZ - positions.array[i3 + 2]) * SPRING_STRENGTH;
+
+        const dx = mouse3D.x - positions.array[i3];
+        const dy = mouse3D.y - positions.array[i3 + 1];
+        const dz = mouse3D.z - positions.array[i3 + 2];
+        const distToMouse = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+        if (distToMouse < MOUSE_INFLUENCE_RADIUS && distToMouse > 0.1) {
+          const influence = (1 - distToMouse / MOUSE_INFLUENCE_RADIUS) * params.mouseInfluence;
+          const radiusNorm = 1 / distToMouse;
+          const tx = dx * radiusNorm;
+          const ty = dy * radiusNorm;
+
+          const swirlX = -ty;
+          const swirlY = tx;
+
+          vx += (swirlX + tx * 0.3) * influence;
+          vy += (swirlY + ty * 0.3) * influence;
+          vz += dz * radiusNorm * 0.1 * influence;
+        }
+
+        vx *= DAMPING;
+        vy *= DAMPING;
+        vz *= DAMPING;
+
+        velocities[i3] = vx;
+        velocities[i3 + 1] = vy;
+        velocities[i3 + 2] = vz;
+
+        // 爆炸效果 - 向外推
+        if (transitionExplosion > 0) {
+          const px = positions.array[i3];
+          const py = positions.array[i3 + 1];
+          const pz = positions.array[i3 + 2];
+          const dist = Math.sqrt(px * px + py * py + pz * pz) + 0.1;
+          const explodeForce = transitionExplosion * 0.1;
+          velocities[i3] += (px / dist) * explodeForce;
+          velocities[i3 + 1] += (py / dist) * explodeForce;
+          velocities[i3 + 2] += (pz / dist) * explodeForce;
+        }
+
+        positions.array[i3] += vx;
+        positions.array[i3 + 1] += vy;
+        positions.array[i3 + 2] += vz;
+
+        const colorPhase = (positions.array[i3] + positions.array[i3 + 1] + positions.array[i3 + 2]) * 0.1 + elapsedTime * 0.2;
+        const colorT = (Math.sin(colorPhase) + 1) * 0.5;
+
+        const baseColor = new THREE.Color();
+        if (colorT < 0.4) {
+          baseColor.lerpColors(colorCyan, colorMagenta, colorT / 0.4);
+        } else if (colorT < 0.7) {
+          baseColor.lerpColors(colorMagenta, colorOrange, (colorT - 0.4) / 0.3);
+        } else {
+          baseColor.lerpColors(colorOrange, colorCyan, (colorT - 0.7) / 0.3);
+        }
+
+        // 应用切换闪光
+        const flashBoost = 1 + transitionFlash * 0.3;
+        colors.array[i3] = Math.min(baseColor.r * flashBoost, 1);
+        colors.array[i3 + 1] = Math.min(baseColor.g * flashBoost, 1);
+        colors.array[i3 + 2] = Math.min(baseColor.b * flashBoost, 1);
+      }
+
+      positions.needsUpdate = true;
+      colors.needsUpdate = true;
+    }
+
+    function setupPostProcessing() {
+      composer = new EffectComposer(renderer);
+
+      composer.addPass(new RenderPass(scene, camera));
+
+      // 多层bloom
+      composer.addPass(new UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth * 0.5, window.innerHeight * 0.5),
+        0.5, 0.3, 0.8
+      ));
+
+      bloomPassCore = new UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight),
+        params.bloomStrength, 0.8, 0.3
+      );
+      composer.addPass(bloomPassCore);
+
+      bloomPassBleed = new UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth * 0.25, window.innerHeight * 0.25),
+        1.2, 1.5, 0.1
+      );
+      composer.addPass(bloomPassBleed);
+
+      // 色差
+      composer.addPass(new ShaderPass({
+        uniforms: {
+          tDiffuse: { value: null },
+          amount: { value: 0.003 }
+        },
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform sampler2D tDiffuse;
+          uniform float amount;
+          varying vec2 vUv;
+          void main() {
+            vec2 dir = vUv - vec2(0.5);
+            float dist = length(dir);
+            vec2 offset = dir * dist * amount;
+            float r = texture2D(tDiffuse, vUv + offset).r;
+            float g = texture2D(tDiffuse, vUv).g;
+            float b = texture2D(tDiffuse, vUv - offset).b;
+            gl_FragColor = vec4(r, g, b, 1.0);
+          }
+        `
+      }));
+
+      // 颗粒
+      composer.addPass(new ShaderPass({
+        uniforms: {
+          tDiffuse: { value: null },
+          time: { value: 0 },
+          intensity: { value: 0.08 }
+        },
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform sampler2D tDiffuse;
+          uniform float time;
+          uniform float intensity;
+          varying vec2 vUv;
+          float random(vec2 co) {
+            return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
+          }
+          void main() {
+            vec4 color = texture2D(tDiffuse, vUv);
+            float noise = random(vUv + time) * intensity;
+            color.rgb += noise - intensity * 0.5;
+            gl_FragColor = color;
+          }
+        `
+      }));
+
+      // 暗角
+      composer.addPass(new ShaderPass({
+        uniforms: {
+          tDiffuse: { value: null },
+          darkness: { value: 1.2 },
+          offset: { value: 1.0 }
+        },
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform sampler2D tDiffuse;
+          uniform float darkness;
+          uniform float offset;
+          varying vec2 vUv;
+          void main() {
+            vec4 color = texture2D(tDiffuse, vUv);
+            vec2 uv = (vUv - vec2(0.5)) * vec2(offset);
+            float vignette = 1.0 - dot(uv, uv);
+            color.rgb *= smoothstep(0.0, 1.0, pow(vignette, darkness));
+            gl_FragColor = color;
+          }
+        `
+      }));
+
+      composer.addPass(new OutputPass());
+    }
+
+    function init() {
+      try {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(PALETTE.nightBlue);
+        scene.fog = new THREE.FogExp2(PALETTE.nightBlue, 0.012);
+
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 18);
+
+        renderer = new THREE.WebGLRenderer({
+          antialias: true,
+          powerPreference: 'high-performance'
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.1;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.enablePan = false;
+        controls.minDistance = 8;
+        controls.maxDistance = 40;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.5;
+
+        scene.add(new THREE.AmbientLight(PALETTE.deepBlue, 0.15));
+
+        const cyanLight = new THREE.PointLight(PALETTE.cyan, 2.0, 50);
+        cyanLight.position.set(10, 5, 10);
+        scene.add(cyanLight);
+
+        const magentaLight = new THREE.PointLight(PALETTE.magenta, 2.0, 50);
+        magentaLight.position.set(-10, 5, -10);
+        scene.add(magentaLight);
+
+        const orangeLight = new THREE.PointLight(PALETTE.orange, 1.5, 30);
+        orangeLight.position.set(0, -5, 5);
+        scene.add(orangeLight);
+
+        const moonLight = new THREE.DirectionalLight(PALETTE.paleBlue, 0.3);
+        moonLight.position.set(5, 20, 5);
+        scene.add(moonLight);
+
+        const groundMat = new THREE.MeshStandardMaterial({
+          color: 0x050508,
+          metalness: 0.9,
+          roughness: 0.4
+        });
+        const ground = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.y = -8;
+        scene.add(ground);
+
+        const geometries = createGeometries();
+        particleSystem = createParticleSystem(geometries);
+
+        setupPostProcessing();
+
+        // 创建鼠标光效
+        createMouseEffects();
+
+        // 创建背景氛围粒子
+        createAmbientParticles();
+
+        const gui = new GUI({ title: '控制面板' });
+        gui.add(params, 'bloomStrength', 0.5, 1.0).name('Bloom强度');
+        gui.add(params, 'transitionSpeed', 1, 5).name('变换速度');
+        gui.add(params, 'mouseInfluence', 0, 2).name('鼠标影响');
+        gui.add(params, 'autoRotate').name('自动旋转').onChange(v => {
+          controls.autoRotate = v;
+        });
+
+        window.addEventListener('resize', onResize);
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('keydown', onKeyDown);
+
+        document.getElementById('loading').style.display = 'none';
+        animate();
+
+      } catch (err) {
+        console.error('错误:', err);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').textContent = '初始化失败: ' + err.message;
+      }
+    }
+
+    function onResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      composer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function onMouseMove(event) {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+      raycaster.ray.intersectPlane(plane, mouse3D);
+      if (mouseParticles) mouseParticles.visible = true;
+    }
+
+    function onKeyDown(event) {
+      if (event.code === 'Space') event.preventDefault();
+      if (event.code === 'KeyR') {
+        camera.position.set(0, 0, 18);
+        controls.reset();
+      }
+      // 1-6 切换几何体并触发闪光和爆炸
+      if (event.code >= 'Digit1' && event.code <= 'Digit6') {
+        transitionFlash = 1.0;
+        transitionExplosion = 1.0;
+      }
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      const elapsed = clock.getElapsedTime();
+
+      controls.update();
+      updateParticles(delta, elapsed);
+      particleSystem.material.uniforms.time.value = elapsed;
+      updateMouseEffects(elapsed);
+      updateAmbientParticles(elapsed);
+
+      // 更新bloom强度
+      bloomPassCore.strength = params.bloomStrength;
+      bloomPassBleed.strength = params.bloomStrength * 0.6;
+
+      composer.render();
+    }
+
+    init();
+  </script>
+</body>
+</html>
